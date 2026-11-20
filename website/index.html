@@ -399,7 +399,7 @@ function downloadAnalysis(mode){
       createdAt:saved.createdAt||null,
       note:'Move classifications and accuracy are Chess Master estimates, not Chess.com CAPS2. Evaluations depend on engine version, search time and hardware.'
     },
-    game:{pgn,whiteRating:saved.ratings?.white??getAnalysisRatings().white,blackRating:saved.ratings?.black??getAnalysisRatings().black},
+    game:{pgn,whiteRating:saved.ratings?.White??getAnalysisRatings().White,blackRating:saved.ratings?.Black??getAnalysisRatings().Black},
     summary:{whiteAccuracy:saved.wa,blackAccuracy:saved.ba},
     evaluations:saved.evaluations,
     moves:saved.rows
@@ -414,7 +414,7 @@ function downloadAnalysis(mode){
     setTimeout(()=>URL.revokeObjectURL(url),1500);
     toast((mode==='quick'?'Quick':'Deep')+' analysis downloaded.');
   }catch(error){
-    try{copyText(json);toast('Download unavailable. Analysis JSON copied instead.')}catch(copyError){toast('Could not export analysis on this browser.')}
+    try{window.prompt('Copy your Chess Master analysis JSON:',json)}catch(copyError){toast('Could not export analysis on this browser.')}
   }
 }
 async function analyseCurrentGame(){return runGameAnalysis('quick')}
@@ -493,7 +493,7 @@ async function runGameAnalysis(mode,force=false){
       rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,expectedLoss,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
-    try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,ratings:{white:ratings.white,black:ratings.black},createdAt:new Date().toISOString()}))}catch(e){}
+    try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,ratings:{White:ratings.White,Black:ratings.Black},createdAt:new Date().toISOString()}))}catch(e){}
     analysisRowsByMode[mode]=rows;
     if(exportBtn)exportBtn.disabled=false;
     summary.innerHTML=renderAnalysisSummary(wa,ba,rows);
