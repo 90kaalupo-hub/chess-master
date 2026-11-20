@@ -203,7 +203,9 @@ async function runGameAnalysis(mode,force=false){
   const summary=document.getElementById(prefix+'Summary');
   const moveTime=deep?1200:200,timeout=deep?30000:15000;
   const cacheKey='chessMasterAnalysisV2:'+mode+':'+hashAnalysisText(pgn);
-  if(!force){
+  // A fresh tap on Analyse must actually start Stockfish. Do not short-circuit
+  // the first review by showing an old cached result and changing the button.
+  if(!force && btn.dataset.hasAnalysis==='true'){
     try{
       const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');
       if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
