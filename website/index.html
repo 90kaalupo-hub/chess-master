@@ -130,7 +130,7 @@ function scoreAccuracy(losses){
 }
 async function analyseCurrentGame(){
   if(analysisBusy)return;
-  const pgn=replayState&&replayState.liveGame?replayState.liveGame.pgn():game.pgn();
+  let pgn=game.pgn();if(replayState){const replayPGN=new Chess();replayState.moves.forEach(move=>replayPGN.move(move));pgn=replayPGN.pgn();}
   if(!pgn){toast('Play or load a game before analysing.');return}
   const candidate=new Chess();
   if(!candidate.load_pgn(pgn)||!candidate.history().length){toast('This game has no moves to analyse.');return}
