@@ -139,7 +139,7 @@ function materialBalance(fen,color){
   return balance;
 }
 function isBrilliantSacrifice(beforeFen,afterFen,replyPv,mover){
-  const first=(replyPv||'').trim().split(/\\s+/)[0]||'';
+  const first=(replyPv||'').trim().split(/\s+/)[0]||'';
   const match=first.match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);
   if(!match)return false;
   try{
