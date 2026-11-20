@@ -27,6 +27,13 @@ The chess rules library is loaded from cdnjs. The service worker attempts to cac
 
 No paid hosting is required for a public GitHub Pages site, subject to GitHub's current account and repository limits.
 
-## Roadmap
+## v0.2 — Stockfish analysis (in progress)
 
-Stockfish analysis, Chess.com import, offline AI bots, puzzles, lessons, profiles, accounts, premium features and online multiplayer are later milestones, not yet implemented.
+- Upgrade game replay with a move-by-move timeline, selectable positions, autoplay, pause/resume, playback speeds, and last-move highlighting.
+- Add local Stockfish analysis for both players, with per-move evaluations, best-move suggestions, move classifications, accuracy estimates, and an evaluation graph.
+- Keep analysis on-device where possible; select a small single-threaded WebAssembly build for compatibility with static hosting and mobile browsers.
+- Publish the matching Stockfish GPL-3.0 licence and source/build notices before shipping the engine. The engine is not yet integrated in this commit.
+
+## Later roadmap
+
+Chess.com import, offline AI bots, puzzles, lessons, profiles, accounts, premium features and online multiplayer remain later milestones.
