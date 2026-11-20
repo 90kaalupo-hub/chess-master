@@ -31,8 +31,10 @@ No paid hosting is required for a public GitHub Pages site, subject to GitHub's 
 
 - Upgrade game replay with a move-by-move timeline, selectable positions, autoplay, pause/resume, playback speeds, and last-move highlighting.
 - Add local Stockfish analysis for both players, with per-move evaluations, best-move suggestions, move classifications, accuracy estimates, and an evaluation graph.
-- Keep analysis on-device where possible; select a small single-threaded WebAssembly build for compatibility with static hosting and mobile browsers.
-- Publish the matching Stockfish GPL-3.0 licence and source/build notices before shipping the engine. The engine is not yet integrated in this commit.
+- Engine candidate selected for the browser prototype: **Stockfish.js 19.0.1, lite single-threaded WebAssembly**. Its published size is approximately 1.7 MB, and the single-threaded build does not require cross-origin isolation headers, which suits GitHub Pages and Android browsers.
+- The intended release will serve the engine files from this repository (not rely on a live CDN), cache them through the PWA service worker, and run analysis in a Web Worker so the board remains responsive.
+- Before distributing the engine, include the exact matching GPL-3.0 licence and corresponding source/build notices for the exact Stockfish.js release. Stockfish.js is GPL-3.0; see the [upstream package and build documentation](https://github.com/nmrugg/stockfish.js).
+- **Status:** the engine files and analysis UI are not integrated yet. The next implementation step is to add and verify the exact engine assets and UCI worker before enabling analysis in the app.
 
 ## Later roadmap
 
