@@ -27,6 +27,13 @@ The chess rules library is loaded from cdnjs. The service worker attempts to cac
 
 No paid hosting is required for a public GitHub Pages site, subject to GitHub's current account and repository limits.
 
+## Advanced game review update (feature branch)
+- Added a post-analysis Game Review summary with the recorded PGN result when available, separate White/Black accuracy estimates, and a clear note that local games do not change an online rating.
+- Analysis move cards are now keyboard-accessible and selectable. Selecting a move opens the matching replay position, shows its classification and coach explanation, includes the before/after engine evaluation when available, and draws an arrow for the engine's principal suggested move.
+- Added Previous/Next move navigation to the review summary.
+- These results remain Chess Master's Stockfish-derived estimates. They are not Chess.com CAPS2 accuracy, official game ratings, or online rating changes.
+- Validation still required: test real PGNs and engine output on Android browsers, verify cached analysis retrieval, check arrow orientation after board flip, and measure performance for long games. No claim of full device QA is made by this code change.
+
 ## v0.2 — Stockfish analysis (in progress)
 
 - Upgrade game replay with a move-by-move timeline, selectable positions, autoplay, pause/resume, playback speeds, and last-move highlighting.
