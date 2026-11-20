@@ -1,0 +1,59 @@
+name: Prepare local Stockfish engine assets
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/stockfish-assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download pinned Stockfish 19 lite single-threaded files
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST="website/engine/stockfish-19.0.1"
+          mkdir -p "$DEST"
+
+          fetch_asset() {
+            local path="$1"
+            local output="$2"
+            local primary="https://cdn.jsdelivr.net/npm/stockfish@19.0.1/$path"
+            local fallback="https://unpkg.com/stockfish@19.0.1/$path"
+            if ! curl --fail --location --retry 2 --silent --show-error "$primary" --output "$output"; then
+              echo "Primary package mirror failed; trying fallback mirror."
+              curl --fail --location --retry 2 --silent --show-error "$fallback" --output "$output"
+            fi
+          }
+
+          fetch_asset "bin/stockfish-19-lite-single.js" "$DEST/stockfish-19-lite-single.js"
+          fetch_asset "bin/stockfish-19-lite-single.wasm" "$DEST/stockfish-19-lite-single.wasm"
+          fetch_asset "Copying.txt" "$DEST/COPYING.txt"
+
+          echo "Verifying the pinned engine binaries..."
+          echo "ccb130d7ff29408531c47d859a49f91d59d4f482d05a53eb1a3231a4f624c91a  $DEST/stockfish-19-lite-single.js" | sha256sum --check
+          echo "ee4f115bdb2d32cadf96cada104a05b5ec257d7ad6f57582190b49bc71f096de  $DEST/stockfish-19-lite-single.wasm" | sha256sum --check
+          test -s "$DEST/COPYING.txt"
+
+      - name: Commit engine assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add website/engine/stockfish-19.0.1
+          if git diff --cached --quiet; then
+            echo "Engine assets are already up to date."
+            exit 0
+          fi
+          git commit -m "Vendor Stockfish 19 lite engine assets [skip stockfish-assets]"
+          git push
