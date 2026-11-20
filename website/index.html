@@ -150,6 +150,29 @@ function isBrilliantSacrifice(beforeFen,afterFen,replyPv,mover){
     return materialGiven>=3;
   }catch(error){return false}
 }
+function escapeAnalysisText(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));}
+function uciPvToSan(fen,pv){
+  if(!pv)return '';
+  try{
+    const position=new Chess(fen),tokens=String(pv).trim().split(/\\s+/),san=[];
+    for(const token of tokens){
+      const match=token.match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);
+      if(!match)break;
+      const move=position.move({from:match[1],to:match[2],promotion:match[3]||'q'});
+      if(!move)break;
+      san.push(move.san);
+      if(san.length>=8){if(tokens.length>san.length)san.push('…');break;}
+    }
+    return san.join(' ');
+  }catch(error){return ''}
+}
+function renderAnalysisRows(rows){
+  return rows.map(row=>{
+    const best=row.best?'<div class="analysisBest"><strong>Engine line</strong> · '+escapeAnalysisText(row.best)+'</div>':'';
+    const loss=Number.isFinite(Number(row.loss))?' Estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
+    return '<article class="analysisMove"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+escapeAnalysisText(row.side)+'</span><span class="analysisNotation">'+escapeAnalysisText(row.move)+'</span></div><span class="analysisTag '+escapeAnalysisText(row.classification.kind)+'">'+escapeAnalysisText(row.classification.name)+'</span><div class="analysisExplanation">'+escapeAnalysisText(explainMove(row.loss,row.classification))+loss+'</div>'+best+'</article>';
+  }).join('');
+}
 function explainMove(loss,classification){
   if(classification.name==='Blunder')return 'A major evaluation swing. Review the position carefully for a missed tactic or hanging piece.';
   if(classification.name==='Mistake')return 'This move noticeably worsened the position. Compare it with the suggested engine line.';
@@ -202,7 +225,7 @@ async function runGameAnalysis(mode,force=false){
   const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
   const summary=document.getElementById(prefix+'Summary');
   const moveTime=deep?1200:200,timeout=deep?30000:15000;
-  const cacheKey='chessMasterAnalysisV2:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV3:'+mode+':'+hashAnalysisText(pgn);
   // A fresh tap on Analyse must actually start Stockfish. Do not short-circuit
   // the first review by showing an old cached result and changing the button.
   if(!force && btn.dataset.hasAnalysis==='true'){
@@ -210,7 +233,7 @@ async function runGameAnalysis(mode,force=false){
       const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');
       if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
         summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+formatAccuracy(saved.wa)+'</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+formatAccuracy(saved.ba)+'</strong></div>';
-        results.innerHTML=saved.rows.map(row=>'<article class="analysisMove"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+row.side+'</span><span class="analysisNotation">'+row.move+'</span></div><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span><div class="analysisExplanation">'+explainMove(row.loss,row.classification)+'</div>'+(row.best?'<div class="analysisBest"><strong>Engine suggestion</strong> · '+row.best+'</div>':'')+'</article>').join('');
+        results.innerHTML=renderAnalysisRows(saved.rows);
         renderEvalGraph(prefix+'Graph',saved.evaluations);progress.style.width='100%';status.textContent=(deep?'Deep':'Quick')+' analysis · saved result';btn.dataset.hasAnalysis='true';btn.textContent='↻ Reanalyse';btn.onclick=()=>runGameAnalysis(mode,true);return;
       }
     }catch(e){}
@@ -241,12 +264,12 @@ async function runGameAnalysis(mode,force=false){
       const loss=Math.max(0,mover==='White'?before-after:after-before);
       (mover==='White'?whiteLoss:blackLoss).push(loss);
       const brilliant=isBrilliantSacrifice(positions[i-1].fen,positions[i].fen,evaluations[i].best,mover);
-      rows.push({ply:i,move:positions[i].move,side:mover,loss,classification:classifyMove(loss,brilliant),best:evaluations[i-1].best||''});
+      rows.push({ply:i,move:positions[i].move,side:mover,loss,classification:classifyMove(loss,brilliant),best:uciPvToSan(positions[i-1].fen,evaluations[i-1].best)});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
     try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,createdAt:new Date().toISOString()}))}catch(e){}
     summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+formatAccuracy(wa)+'</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+formatAccuracy(ba)+'</strong></div>';
-    results.innerHTML=rows.map(row=>'<article class="analysisMove"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+row.side+'</span><span class="analysisNotation">'+row.move+'</span></div><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span><div class="analysisExplanation">'+explainMove(row.loss,row.classification)+'</div>'+(row.best?'<div class="analysisBest"><strong>Engine suggestion</strong> · '+row.best+'</div>':'')+'</article>').join('');
+    results.innerHTML=renderAnalysisRows(rows);
     renderEvalGraph(prefix+'Graph',evaluations);
     btn.dataset.hasAnalysis='true';btn.onclick=()=>runGameAnalysis(mode,true);
     status.textContent=(deep?'Deep':'Quick')+' analysis complete · '+moveTime+' ms per position';
