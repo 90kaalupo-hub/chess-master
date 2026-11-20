@@ -31,7 +31,7 @@
 <section id="game">
 <div class="gameHead"><div><div class="eyebrow">Local game</div><h1 style="font-size:28px">Play chess</h1><p class="sub" id="gameStatus">White to move</p></div><button class="secondary" onclick="showHome()">← Home</button></div>
 <div class="gameLayout"><div class="boardWrap"><div class="player"><strong>♚ Black</strong><strong id="blackLabel">Ready</strong></div><div class="gameBoard" id="board" role="grid" aria-label="Interactive chessboard"></div><div class="player"><strong>♔ White</strong><strong id="whiteLabel" class="turn">To move</strong></div></div>
-<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()" disabled>▶ Play</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><button class="primary" id="analyseGameBtn" style="width:100%;margin-top:9px" onclick="analyseCurrentGame()">♟ Analyse game with Stockfish</button><section id="analysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Game analysis</h2><span id="analysisStatus" class="muted">Ready</span></div><div class="analysisSummary" id="analysisSummary"></div><div class="analysisProgress"><div id="analysisProgressBar"></div></div><div id="analysisResults" class="analysisResults"><p class="muted">Analyse a saved or current game to see move feedback.</p></div></section><div class="status" id="result">Game in progress</div></aside></div>
+<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()" disabled>▶ Play</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><button class="primary" id="analyseGameBtn" style="width:100%;margin-top:9px" onclick="analyseCurrentGame()">♟ Analyse game with Stockfish</button><section id="analysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Quick Analysis</h2><span id="analysisStatus" class="muted">Ready</span></div><p class="muted">Fast overview · shorter engine thinking time.</p><div class="analysisSummary" id="analysisSummary"></div><div class="analysisProgress"><div id="analysisProgressBar"></div></div><div id="analysisResults" class="analysisResults"><p class="muted">Run Quick Analysis to see move feedback.</p></div></section><button class="secondary" id="deepAnalyseBtn" style="width:100%;margin-top:10px" onclick="analyseCurrentGameDeep()">♟ Run Deep Analysis</button><section id="deepAnalysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Deep Analysis</h2><span id="deepAnalysisStatus" class="muted">Ready</span></div><p class="muted">More engine thinking per position for a closer review. This takes longer, especially for long games.</p><div class="analysisSummary" id="deepAnalysisSummary"></div><div class="analysisProgress"><div id="deepAnalysisProgressBar"></div></div><div id="deepAnalysisResults" class="analysisResults"><p class="muted">Run Deep Analysis separately when you want a more detailed review.</p></div></section><div class="status" id="result">Game in progress</div></aside></div>
 </section>
 <section id="importPanel" class="hidden" style="margin-top:20px;background:white;border:1px solid var(--line);border-radius:16px;padding:16px"><div class="gameHead"><div><h2>Import PGN</h2><p class="sub">Paste a PGN game to load its final position and move list.</p></div><button class="secondary" onclick="hideImport()">Close</button></div><textarea id="pgnInput" class="field" placeholder='[Event "Casual Game"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><div class="actions"><button class="primary" onclick="loadPGN()">Load PGN</button><button class="secondary" onclick="document.getElementById('pgnInput').value=''">Clear</button></div><p class="muted" id="importStatus"></p></section>
 </main>
@@ -136,28 +136,35 @@ function scoreAccuracy(losses){
   const avg=losses.reduce((a,b)=>a+b,0)/losses.length;
   return Math.max(0,Math.min(100,Math.round(100-avg*0.18)));
 }
-async function analyseCurrentGame(){
+async function analyseCurrentGame(){return runGameAnalysis('quick')}
+async function analyseCurrentGameDeep(){return runGameAnalysis('deep')}
+async function runGameAnalysis(mode){
   if(analysisBusy)return;
   let pgn=game.pgn();if(replayState){const replayPGN=new Chess();replayState.moves.forEach(move=>replayPGN.move(move));pgn=replayPGN.pgn();}
   if(!pgn){toast('Play or load a game before analysing.');return}
   const candidate=new Chess();
   if(!candidate.load_pgn(pgn)||!candidate.history().length){toast('This game has no moves to analyse.');return}
-  analysisBusy=true;
-  const btn=document.getElementById('analyseGameBtn'),panel=document.getElementById('analysisPanel'),status=document.getElementById('analysisStatus'),results=document.getElementById('analysisResults'),progress=document.getElementById('analysisProgressBar');
-  panel.classList.remove('hidden');btn.disabled=true;btn.textContent='Analysing…';status.textContent='Starting local engine';results.innerHTML='<p class="muted">Loading the local Stockfish engine and its WASM file. The first start can take a little while; the review will begin automatically when the engine is ready.</p>';progress.style.width='0%';
+  const deep=mode==='deep',prefix=deep?'deepAnalysis':'analysis';
+  const btn=document.getElementById(deep?'deepAnalyseBtn':'analyseGameBtn');
+  const panel=document.getElementById(deep?'deepAnalysisPanel':'analysisPanel');
+  const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
+  const summary=document.getElementById(prefix+'Summary');
+  const moveTime=deep?1200:200,timeout=deep?30000:15000;
+  analysisBusy=true;panel.classList.remove('hidden');btn.disabled=true;btn.textContent=deep?'Deep analysis running…':'Quick analysis running…';
+  status.textContent='Starting local engine';results.innerHTML='<p class="muted">'+(deep?'Deep Analysis is preparing Stockfish. It will spend about 1.2 seconds on each position.':'Loading the local Stockfish engine. Quick Analysis will begin automatically when ready.')+'</p>';summary.innerHTML='';progress.style.width='0%';
   try{
     const worker=await getEngine();
-    status.textContent='Loading engine · preparing Stockfish';
+    status.textContent='Preparing Stockfish';
     await engineCommand(worker,'uci',line=>line==='uciok',60000);
     await engineCommand(worker,'isready',line=>line==='readyok',30000);
+    worker.postMessage('ucinewgame');
     const moves=candidate.history({verbose:true}),replay=new Chess(),positions=[{fen:replay.fen(),ply:0,move:'Start',side:'—'}];
     moves.forEach((move,i)=>{replay.move(move);positions.push({fen:replay.fen(),ply:i+1,move:move.san,side:i%2===0?'White':'Black'})});
     const evaluations=[];
     for(let i=0;i<positions.length;i++){
-      status.textContent='Quick review · position '+(i+1)+' of '+positions.length;
-      worker._pending=null;
-      worker.postMessage('position fen '+positions[i].fen);
-      const output=await engineCommand(worker,'go movetime 200',line=>line.startsWith('bestmove'),15000);
+      status.textContent=(deep?'Deep analysis':'Quick analysis')+' · position '+(i+1)+' of '+positions.length;
+      worker._pending=null;worker.postMessage('position fen '+positions[i].fen);
+      const output=await engineCommand(worker,'go movetime '+moveTime,line=>line.startsWith('bestmove'),timeout);
       const cp=parseEngineScore(output.info,positions[i].fen);
       const best=(output.info.match(/ pv (.+)$/)||[])[1]||'';
       evaluations.push({cp:cp===null?0:cp,best});
@@ -165,21 +172,21 @@ async function analyseCurrentGame(){
     }
     const whiteLoss=[],blackLoss=[],rows=[];
     for(let i=1;i<positions.length;i++){
-      const before=evaluations[i-1].cp,after=evaluations[i].cp;
-      const mover=positions[i].side;
+      const before=evaluations[i-1].cp,after=evaluations[i].cp,mover=positions[i].side;
       const loss=Math.max(0,mover==='White'?before-after:after-before);
       (mover==='White'?whiteLoss:blackLoss).push(loss);
-      const classification=classifyMove(loss);
-      rows.push({ply:i,move:positions[i].move,side:mover,loss,classification,best:evaluations[i-1].best||''});
+      rows.push({ply:i,move:positions[i].move,side:mover,loss,classification:classifyMove(loss),best:evaluations[i-1].best||''});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
-    document.getElementById('analysisSummary').innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+ba+'%</strong></div>';
+    summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+ba+'%</strong></div>';
     results.innerHTML=rows.map(row=>'<div class="analysisMove"><strong>'+row.ply+'. '+row.side+'</strong><span>'+row.move+'</span><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span>'+(row.best?'<div class="analysisBest">Engine line: '+row.best+'</div>':'')+'</div>').join('');
-    status.textContent='Quick review complete · 200 ms per position';
+    status.textContent=(deep?'Deep':'Quick')+' analysis complete · '+moveTime+' ms per position';
   }catch(error){
     status.textContent='Could not complete';
-    results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">Chess Master is configured to use its locally hosted Stockfish engine. Check that the page and engine files have finished loading, then retry.</p>';
-  }finally{analysisBusy=false;btn.disabled=false;btn.textContent='♟ Analyse game with Stockfish'}
+    results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">Chess Master is using its locally hosted Stockfish engine. Check that the page and engine files have finished loading, then retry.</p>';
+  }finally{
+    analysisBusy=false;btn.disabled=false;btn.textContent=deep?'♟ Run Deep Analysis':'♟ Analyse game with Stockfish';
+  }
 }
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
