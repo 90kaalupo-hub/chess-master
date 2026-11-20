@@ -153,7 +153,7 @@ async function analyseCurrentGame(){
   if(!candidate.load_pgn(pgn)||!candidate.history().length){toast('This game has no moves to analyse.');return}
   analysisBusy=true;
   const btn=document.getElementById('analyseGameBtn'),panel=document.getElementById('analysisPanel'),status=document.getElementById('analysisStatus'),results=document.getElementById('analysisResults'),progress=document.getElementById('analysisProgressBar');
-  panel.classList.remove('hidden');btn.disabled=true;btn.textContent='Analysing…';status.textContent='Loading engine';results.innerHTML='<p class="muted">Loading Stockfish. The first analysis needs an internet connection and may take a little while.</p>';progress.style.width='0%';
+  panel.classList.remove('hidden');btn.disabled=true;btn.textContent='Analysing…';status.textContent='Starting local engine';results.innerHTML='<p class="muted">Starting the locally stored Stockfish engine. Once it is ready, a quick review will analyse each position.</p>';progress.style.width='0%';
   try{
     const worker=await getEngine();
     await engineCommand(worker,'uci',line=>line==='uciok',30000);
@@ -162,10 +162,10 @@ async function analyseCurrentGame(){
     moves.forEach((move,i)=>{replay.move(move);positions.push({fen:replay.fen(),ply:i+1,move:move.san,side:i%2===0?'White':'Black'})});
     const evaluations=[];
     for(let i=0;i<positions.length;i++){
-      status.textContent='Analysing '+i+'/'+(positions.length-1);
+      status.textContent='Quick review · position '+(i+1)+' of '+positions.length;
       worker._pending=null;
       worker.postMessage('position fen '+positions[i].fen);
-      const output=await engineCommand(worker,'go depth 10',line=>line.startsWith('bestmove'),60000);
+      const output=await engineCommand(worker,'go movetime 200',line=>line.startsWith('bestmove'),15000);
       const cp=parseEngineScore(output.info,positions[i].fen);
       const best=(output.info.match(/ pv (.+)$/)||[])[1]||'';
       evaluations.push({cp:cp===null?0:cp,best});
@@ -183,7 +183,7 @@ async function analyseCurrentGame(){
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
     document.getElementById('analysisSummary').innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+ba+'%</strong></div>';
     results.innerHTML=rows.map(row=>'<div class="analysisMove"><strong>'+row.ply+'. '+row.side+'</strong><span>'+row.move+'</span><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span>'+(row.best?'<div class="analysisBest">Engine line: '+row.best+'</div>':'')+'</div>').join('');
-    status.textContent='Finished · depth 10';
+    status.textContent='Quick review complete · 200 ms per position';
   }catch(error){
     status.textContent='Could not complete';
     results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">Chess Master is configured to use its locally hosted Stockfish engine. Check that the page and engine files have finished loading, then retry.</p>';
