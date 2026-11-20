@@ -632,7 +632,7 @@ function reviewAnalysisMove(index){
   drawReviewArrow();
   const category=row.classification?.name||'Move';
   const loss=Number.isFinite(Number(row.loss))?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
-  const coach=category+'. '+explainMove(row)+(row.best?' Best continuation: '+row.best+'.':'')+loss;
+  const evalText=Number.isFinite(Number(row.evalBefore))&&Number.isFinite(Number(row.evalAfter))?' Evaluation (White perspective): '+(row.evalBefore/100).toFixed(2)+' → '+(row.evalAfter/100).toFixed(2)+'. ':'';\n  const coach=category+'. '+explainMove(row)+evalText+(row.best?' Best continuation: '+row.best+'.':'')+loss;
   const label='Move '+Math.ceil(row.ply/2)+(row.side==='White'?' · White':' · Black')+' · '+category;
   document.getElementById('reviewCoachText').textContent=label+'. '+coach;
   document.getElementById('reviewPrevious').disabled=index<=0;
