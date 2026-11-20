@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f8f4"><meta name="description" content="Chess Master — play, learn and improve.">
+<title>Chess Master — Play. Learn. Improve.</title>
+<style>
+:root{--bg:#f7f8f4;--surface:#fff;--ink:#1e2a23;--muted:#68766d;--green:#245b42;--green2:#347653;--line:#e4e9e2;--soft:#edf3ed;--gold:#c49a43}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,a{font:inherit}button{cursor:pointer}.top{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100% - 1120px)/2));background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px}.mark{width:36px;height:36px;border-radius:12px;background:var(--green);color:white;display:grid;place-items:center;font-size:23px}
+.topright{display:flex;gap:10px;align-items:center}.pill{border:1px solid var(--line);background:white;border-radius:999px;padding:9px 14px;color:var(--ink)}.primary{background:var(--green);color:white;border:0;border-radius:12px;padding:11px 17px;font-weight:700}.primary:hover{background:var(--green2)}
+main{max-width:1120px;margin:auto;padding:30px 20px 100px}.welcome{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:10px 0 24px}.eyebrow{color:var(--green2);font-weight:800;letter-spacing:.11em;text-transform:uppercase;font-size:11px}h1{font-size:clamp(27px,5vw,40px);line-height:1.1;margin:7px 0}h2{font-size:19px;margin:0 0 5px}.sub{color:var(--muted);margin:0}.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;background:#eaf1e9;border:1px solid #dce8dc;border-radius:22px;padding:26px;overflow:hidden}.hero h2{font-size:27px;line-height:1.2;max-width:390px}.hero p{color:#53665a;max-width:390px}.heroActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.ghost{background:white;border:1px solid #d8e3d8;border-radius:12px;padding:10px 15px;font-weight:700;color:var(--green)}
+.board{width:min(100%,290px);aspect-ratio:1;justify-self:center;display:grid;grid-template-columns:repeat(8,1fr);border:7px solid #fff;border-radius:9px;box-shadow:0 12px 30px #213b2a20;overflow:hidden}.sq{display:grid;place-items:center;font-size:clamp(19px,4vw,34px);line-height:1}.l{background:#f1e7d2}.d{background:#8eaa8d}.pieces{filter:drop-shadow(0 1px 1px #0003)}
+.sectionHead{display:flex;justify-content:space-between;align-items:center;margin:28px 0 13px}.textLink{color:var(--green);font-weight:700;text-decoration:none}.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.tile{background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:18px;min-height:145px;text-align:left;color:var(--ink);transition:transform .15s,border-color .15s}.tile:hover{transform:translateY(-2px);border-color:#b8cdbb}.ico{width:40px;height:40px;background:var(--soft);border-radius:13px;display:grid;place-items:center;font-size:21px;margin-bottom:12px}.tile strong{display:block;font-size:15px}.tile small{color:var(--muted)}.bottom{display:none}
+.notice{margin-top:22px;border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center}.notice span{font-size:22px}
+@media(max-width:720px){.top{height:60px;padding:0 16px}.topright .pill{display:none}main{padding:22px 15px 90px}.welcome{align-items:flex-start;flex-direction:column}.hero{grid-template-columns:1fr;padding:20px}.hero h2{font-size:24px}.board{width:min(100%,260px)}.tiles{grid-template-columns:repeat(2,1fr);gap:10px}.tile{padding:14px;min-height:130px}.bottom{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:#fff;border-top:1px solid var(--line);padding:9px 4px calc(9px + env(safe-area-inset-bottom));z-index:6}.bottom button{border:0;background:none;color:var(--muted);font-size:11px;display:grid;gap:3px;justify-items:center}.bottom b{font-size:19px;font-weight:500}.bottom .active{color:var(--green);font-weight:800}.notice{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand"><div class="mark">♟</div><span>Chess <span style="color:var(--green2)">Master</span></span></div><div class="topright"><button class="pill" onclick="toast('Account sign-in is planned for a later milestone.')">Sign in</button><button class="primary" onclick="toast('The playable game screen is coming in the next foundation step.')">Play chess</button></div></header>
+<main>
+<section class="welcome"><div><div class="eyebrow">Your chess journey</div><h1>Play. Learn. Improve.</h1><p class="sub">Everything you need to become a stronger player.</p></div><button class="pill" onclick="toast('Settings will be added as the website grows.')">⚙ Settings</button></section>
+<section class="hero"><div><div class="eyebrow">Welcome to Chess Master</div><h2>Make every move count.</h2><p>Play chess, sharpen your tactics and review your games — all in one place.</p><div class="heroActions"><button class="primary" onclick="toast('The playable chessboard is the next 0.1 task.')">♟ Play chess</button><button class="ghost" onclick="toast('Game review is planned for v0.2.')">Review a game</button></div></div><div class="board" aria-label="Decorative chessboard preview" id="preview"></div></section>
+<div class="sectionHead"><div><h2>Explore Chess Master</h2><p class="sub">Choose where you want to begin.</p></div></div>
+<section class="tiles">
+<button class="tile" onclick="toast('Play modes will be built in upcoming steps.')"><div class="ico">♟</div><strong>Play chess</strong><small>Play a friend or challenge a bot</small></button>
+<button class="tile" onclick="toast('Game analysis is planned for v0.2.')"><div class="ico">⌕</div><strong>Game review</strong><small>Find your best moves and mistakes</small></button>
+<button class="tile" onclick="toast('Puzzles are planned for v0.5.')"><div class="ico">♞</div><strong>Puzzles</strong><small>Train your tactical vision</small></button>
+<button class="tile" onclick="toast('Lessons and openings are planned for v0.6.')"><div class="ico">♜</div><strong>Learn chess</strong><small>Build skills step by step</small></button>
+</section>
+<div class="sectionHead"><div><h2>Your chess space</h2><p class="sub">Your games and community, together.</p></div></div>
+<section class="tiles">
+<button class="tile" onclick="toast('Game history is being planned.')"><div class="ico">◷</div><strong>Game history</strong><small>Return to your recent games</small></button>
+<button class="tile" onclick="toast('Friends and online play are planned for v0.9.')"><div class="ico">♧</div><strong>Friends</strong><small>Connect and play together</small></button>
+<button class="tile" onclick="toast('Statistics are planned for v0.7.')"><div class="ico">▥</div><strong>Statistics</strong><small>Follow your improvement</small></button>
+<button class="tile" onclick="toast('Watch and tournaments will arrive in a later update.')"><div class="ico">◎</div><strong>Watch</strong><small>Follow games and events</small></button>
+</section>
+<div class="notice"><span>🌱</span><div><strong>A fresh start to your chess journey</strong><div class="sub">This is the first website foundation. More playable features will be added milestone by milestone.</div></div></div>
+</main>
+<nav class="bottom" aria-label="Main navigation"><button class="active" onclick="window.scrollTo({top:0,behavior:'smooth'})"><b>⌂</b>Home</button><button onclick="toast('Puzzles are coming in a later update.')"><b>♞</b>Puzzles</button><button onclick="toast('Lessons are coming in a later update.')"><b>▤</b>Learn</button><button onclick="toast('Watch is coming in a later update.')"><b>◎</b>Watch</button><button onclick="toast('More features are coming in a later update.')"><b>☰</b>More</button></nav>
+<div id="toast" role="status" style="position:fixed;left:50%;bottom:85px;transform:translateX(-50%);background:#1e2a23;color:#fff;padding:11px 16px;border-radius:12px;max-width:90%;display:none;z-index:10;text-align:center"></div>
+<script>
+const glyphs={w:['♜','♞','♝','♛','♚','♝','♞','♜','♟','♟','♟','♟','♟','♟','♟','♟'],b:['♖','♘','♗','♕','♔','♗','♘','♖','♙','♙','♙','♙','♙','♙','♙','♙']};const board=document.getElementById('preview');for(let r=0;r<8;r++)for(let c=0;c<8;c++){let s=document.createElement('div');s.className='sq '+((r+c)%2?'d':'l');let p=r===0?glyphs.w[c]:r===1?'♟':r===6?'♙':r===7?glyphs.b[c]:'';s.textContent=p;s.classList.add('pieces');board.appendChild(s)}
+let toastTimer;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.display='none',2600)}
+</script>
+</body></html>
