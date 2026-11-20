@@ -22,7 +22,7 @@ The chess rules library is loaded from cdnjs. The service worker attempts to cac
 
 1. In the repository, open **Settings → Pages**.
 2. Under **Build and deployment**, select **Deploy from a branch**.
-3. Choose branch **main** and folder **/website**, then save.
+3. Choose branch **main** and folder **/ (root)**, then save. The root entry page forwards visitors to the website folder.
 4. Wait for GitHub Pages to publish and use the URL shown in Settings → Pages.
 
 No paid hosting is required for a public GitHub Pages site, subject to GitHub's current account and repository limits.
