@@ -558,7 +558,7 @@ async function runGameAnalysis(mode,force=false){
       const sacrifice=isBrilliantSacrifice(positions[i-1].fen,positions[i].fen,evaluations[i].best,mover,cpLoss,played);
       const brilliant=sacrifice&&cpLoss<=20&&beforePoints<0.95&&afterPoints>0.35;
       const classification=classifyMove(cpLoss,{brilliant,great,miss,book,best:exactBest,mateLoss,missedMate,mateDelivered});
-      rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,expectedLoss,mateLoss,missedMate,mateDelivered,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
+      rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,evalBefore:before,evalAfter:after,expectedLoss,mateLoss,missedMate,mateDelivered,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
     try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,ratings:{White:ratings.White,Black:ratings.Black},createdAt:new Date().toISOString()}))}catch(e){}
@@ -579,15 +579,15 @@ async function runGameAnalysis(mode,force=false){
 
 
 /* Chess Master move-by-move review layer */
-let activeReviewRowIndex=-1;
+let activeReviewRowIndex=-1,activeReviewMode='quick';
 let reviewArrowUci='';
 function getReviewRows(){
-  return analysisRowsByMode.deep&&analysisRowsByMode.deep.length?analysisRowsByMode.deep:(analysisRowsByMode.quick||[]);
+  return analysisRowsByMode[activeReviewMode]||analysisRowsByMode.quick||[];
 }
 function getReviewSaved(mode){
   const pgn=currentAnalysisPGN();
   if(!pgn)return null;
-  const key='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
+  const key='chessMasterAnalysisV14:'+mode+':'+hashAnalysisText(pgn);
   try{return JSON.parse(localStorage.getItem(key)||'null')}catch(error){return null}
 }
 function getReviewOutcome(pgn){
@@ -602,7 +602,7 @@ function getReviewOutcome(pgn){
   return {title:'Game complete',note:'No rated online result is recorded for this local game.'};
 }
 function renderPostGameReview(mode){
-  const saved=getReviewSaved(mode);
+  activeReviewMode=mode;const saved=getReviewSaved(mode);
   if(!saved||!Array.isArray(saved.rows))return;
   const hub=document.getElementById('gameReviewHub');
   if(!hub)return;
@@ -623,7 +623,7 @@ function reviewAnalysisMove(index){
   const rows=getReviewRows(),row=rows[index];
   if(!row)return;
   const pgn=currentAnalysisPGN();
-  if(!replayState||replayState.fullPgn!==new ChessPgnCanonical(pgn)){
+  if(!replayState||replayState.fullPgn!==ChessPgnCanonical(pgn)){
     startReplay(pgn);
   }
   activeReviewRowIndex=index;
