@@ -1,4 +1,4 @@
-const CACHE='chess-master-v02-1-shell';
+const CACHE='chess-master-v02-analysis-shell';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./offline.html'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
@@ -8,7 +8,7 @@ self.addEventListener('fetch',event=>{
   const url=new URL(request.url);
   if(url.origin===self.location.origin){
     event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy));}return response;}).catch(()=>caches.match('./offline.html'))));
-  }else if(url.hostname==='cdnjs.cloudflare.com'&&url.pathname.includes('/chess.js/')){
+  }else if((url.hostname==='cdnjs.cloudflare.com'&&url.pathname.includes('/chess.js/'))||(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('/stockfish@19.0.1/'))){
     event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok||response.type==='opaque'){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy));}return response;})));
   }
 });
