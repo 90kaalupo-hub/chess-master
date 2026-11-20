@@ -41,7 +41,7 @@
 <nav class="bottom"><button class="active" onclick="showHome()"><b>⌂</b>Home</button><button onclick="toast('Puzzles are coming in v0.5.')"><b>♞</b>Puzzles</button><button onclick="toast('Lessons are coming in v0.6.')"><b>▤</b>Learn</button><button onclick="toast('Watch is planned for a later update.')"><b>◎</b>Watch</button><button onclick="location.href='./THIRD-PARTY-NOTICES.html'"><b>☰</b>More</button></nav>
 <div id="toast" role="status" style="position:fixed;left:50%;bottom:85px;transform:translateX(-50%);background:#1e2a23;color:#fff;padding:11px 16px;border-radius:12px;max-width:90%;display:none;z-index:10;text-align:center"></div>
 <div id="mateOverlay" class="mateOverlay" role="dialog" aria-modal="true" aria-labelledby="mateTitle" onclick="if(event.target===this)hideCheckmate()"><div class="mateCard"><div class="mateCrown" aria-hidden="true">♛</div><h2 id="mateTitle">Checkmate!</h2><p id="mateWinner">White wins</p><button class="primary" onclick="hideCheckmate()">Celebrate &amp; continue</button></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="./chess.js"></script>
 <script>
 const symbols={wp:'♙',wn:'♘',wb:'♗',wr:'♖',wq:'♕',wk:'♔',bp:'♟',bn:'♞',bb:'♝',br:'♜',bq:'♛',bk:'♚'};
 let game,selected=null,targets=[],flipped=false,toastTimer,replayState=null,replayTimer=null,currentGameId=Date.now(),soundEnabled=localStorage.getItem('chessMasterSound')!=='off',audioContext=null,mateTimer=null;
