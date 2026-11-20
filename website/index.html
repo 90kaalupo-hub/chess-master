@@ -407,7 +407,7 @@ function downloadAnalysis(mode){
   if(!['quick','deep'].includes(mode)){toast('Unknown analysis type.');return}
   const pgn=currentAnalysisPGN();
   if(!pgn){toast('Load or play a game before downloading analysis.');return}
-  const cacheKey='chessMasterAnalysisV14:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
   let saved=null;
   try{saved=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(error){}
   if(!saved||!Array.isArray(saved.rows)||!Array.isArray(saved.evaluations)){
@@ -452,8 +452,8 @@ async function runGameAnalysis(mode,force=false){
   const candidate=new Chess();
   if(!candidate.load_pgn(pgn)||!candidate.history().length){toast('This game has no moves to analyse.');return}
   const modes={
-    quick:{deep:false,prefix:'analysis',button:'analyseGameBtn',panel:'analysisPanel',moveTime:200,timeout:15000,label:'Quick'},
-    deep:{deep:true,prefix:'deepAnalysis',button:'deepAnalyseBtn',panel:'deepAnalysisPanel',moveTime:1200,timeout:30000,label:'Deep'},
+    quick:{deep:false,prefix:'analysis',button:'analyseGameBtn',panel:'analysisPanel',moveTime:500,timeout:30000,label:'Quick'},
+    deep:{deep:true,prefix:'deepAnalysis',button:'deepAnalyseBtn',panel:'deepAnalysisPanel',moveTime:1600,timeout:45000,label:'Deep'},
   };
   const config=modes[mode];if(!config)throw new Error('Unknown analysis mode');
   const {deep,prefix,moveTime,timeout,label}=config;
