@@ -10,7 +10,7 @@
 #game{display:none}.gameHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.gameLayout{display:grid;grid-template-columns:minmax(0,620px) minmax(240px,1fr);gap:20px;align-items:start}.boardWrap{background:white;padding:10px;border:1px solid var(--line);border-radius:18px}.gameBoard{display:grid;grid-template-columns:repeat(8,1fr);width:100%;aspect-ratio:1;overflow:hidden;border-radius:5px}.gameBoard .sq{font-size:clamp(26px,6vw,62px);cursor:pointer}.gameBoard .sq:focus{outline:3px solid #d3a83e;outline-offset:-3px}.side{background:white;border:1px solid var(--line);border-radius:16px;padding:15px}.player{display:flex;justify-content:space-between;padding:10px;background:var(--soft);border-radius:10px;margin:7px 0}.turn{font-weight:800;color:var(--green)}.moveList{height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:9px;margin:10px 0;font-variant-numeric:tabular-nums}.moveRow{display:grid;grid-template-columns:32px 1fr 1fr;gap:8px;padding:3px 0}.gameButtons{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.gameButtons button{flex:1;min-width:90px}.field{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;margin:6px 0 10px}textarea.field{min-height:100px;resize:vertical}.status{padding:10px;background:#f5f7f3;border-radius:10px;color:var(--muted);margin:9px 0}.hidden{display:none!important}
 @media(max-width:760px){main{padding:20px 13px 90px}.hero{grid-template-columns:1fr;padding:18px}.boardPreview{width:min(100%,235px)}.tiles{grid-template-columns:repeat(2,1fr);gap:9px}.tile{padding:13px}.gameLayout{grid-template-columns:1fr}.gameBoard .sq{font-size:clamp(28px,10vw,52px)}.side{padding:12px}.moveList{height:130px}.bottom{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:#fff;border-top:1px solid var(--line);padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:6}.bottom button{border:0;background:none;color:var(--muted);font-size:11px;display:grid;gap:2px;justify-items:center}.bottom b{font-size:19px;font-weight:500}.bottom .active{color:var(--green);font-weight:800}.gameHead{align-items:flex-start}}
 
-.replayTools{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:10px 0}.replayTools button{padding:9px 4px;font-size:13px}.replayMeta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0}.replayMeta select{border:1px solid var(--line);border-radius:9px;padding:7px;background:#fff;color:var(--ink)}.timeline{display:flex;flex-wrap:wrap;gap:5px;max-height:130px;overflow:auto;padding:7px;border:1px solid var(--line);border-radius:10px;margin:8px 0}.timeline button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--ink)}.timeline button.active{background:var(--green);color:#fff;border-color:var(--green)}.gameBoard .sq.lastMove{box-shadow:inset 0 0 0 4px #e5b94e;background-image:linear-gradient(#e5b94e55,#e5b94e55)}.analysisIntro{padding:12px;background:#f5f7f3;border-radius:10px;margin:10px 0;color:var(--muted);font-size:13px}
+.replayTools{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:10px 0}.replayTools button{padding:9px 4px;font-size:13px}.replayMeta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0}.replayMeta select{border:1px solid var(--line);border-radius:9px;padding:7px;background:#fff;color:var(--ink)}.timeline{display:flex;flex-wrap:wrap;gap:5px;max-height:130px;overflow:auto;padding:7px;border:1px solid var(--line);border-radius:10px;margin:8px 0}.timeline button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 8px;font-size:12px;color:var(--ink)}.timeline button.active{background:var(--green);color:#fff;border-color:var(--green)}.gameBoard .sq.lastMove{box-shadow:inset 0 0 0 4px #e5b94e;background-image:linear-gradient(#e5b94e55,#e5b94e55)}.analysisIntro{padding:12px;background:#f5f7f3;border-radius:10px;margin:10px 0;color:var(--muted);font-size:13px}.analysisPanel{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fbfcfa}.analysisSummary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.analysisStat{padding:10px;background:#edf3ed;border-radius:9px}.analysisStat strong{display:block;font-size:20px;color:var(--green)}.analysisProgress{height:7px;background:#e6ebe5;border-radius:9px;overflow:hidden;margin:10px 0}.analysisProgress>div{height:100%;width:0;background:var(--green);transition:width .2s}.analysisResults{max-height:360px;overflow:auto}.analysisMove{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:7px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:13px}.analysisTag{padding:3px 7px;border-radius:7px;background:#edf3ed;font-weight:700}.analysisTag.bad{background:#fff0d8;color:#8a5700}.analysisTag.blunder{background:#ffe5e2;color:#a12d23}.analysisBest{grid-column:2/4;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
@@ -31,7 +31,7 @@
 <section id="game">
 <div class="gameHead"><div><div class="eyebrow">Local game</div><h1 style="font-size:28px">Play chess</h1><p class="sub" id="gameStatus">White to move</p></div><button class="secondary" onclick="showHome()">← Home</button></div>
 <div class="gameLayout"><div class="boardWrap"><div class="player"><strong>♚ Black</strong><strong id="blackLabel">Ready</strong></div><div class="gameBoard" id="board" role="grid" aria-label="Interactive chessboard"></div><div class="player"><strong>♔ White</strong><strong id="whiteLabel" class="turn">To move</strong></div></div>
-<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()" disabled>▶ Play</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><div class="status" id="result">Game in progress</div></aside></div>
+<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()" disabled>▶ Play</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><button class="primary" id="analyseGameBtn" style="width:100%;margin-top:9px" onclick="analyseCurrentGame()">♟ Analyse game with Stockfish</button><section id="analysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Game analysis</h2><span id="analysisStatus" class="muted">Ready</span></div><div class="analysisSummary" id="analysisSummary"></div><div class="analysisProgress"><div id="analysisProgressBar"></div></div><div id="analysisResults" class="analysisResults"><p class="muted">Analyse a saved or current game to see move feedback.</p></div></section><div class="status" id="result">Game in progress</div></aside></div>
 </section>
 <section id="importPanel" class="hidden" style="margin-top:20px;background:white;border:1px solid var(--line);border-radius:16px;padding:16px"><div class="gameHead"><div><h2>Import PGN</h2><p class="sub">Paste a PGN game to load its final position and move list.</p></div><button class="secondary" onclick="hideImport()">Close</button></div><textarea id="pgnInput" class="field" placeholder='[Event "Casual Game"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><div class="actions"><button class="primary" onclick="loadPGN()">Load PGN</button><button class="secondary" onclick="document.getElementById('pgnInput').value=''">Clear</button></div><p class="muted" id="importStatus"></p></section>
 </main>
@@ -72,6 +72,107 @@ function toggleReplayPlay(){if(!replayState){toast('Open a saved game first.');r
 function stopReplayPlay(){if(replayTimer){clearInterval(replayTimer);replayTimer=null}const b=document.getElementById('replayPlay');if(b)b.textContent='▶ Play'}
 function changeReplaySpeed(){if(replayTimer){stopReplayPlay();toggleReplayPlay()}}
 function exitReplay(){if(!replayState)return;stopReplayPlay();game=replayState.liveGame;replayState=null;document.getElementById('replayCount').textContent='Live game';document.getElementById('replayPlay').disabled=true;document.getElementById('exitReplay').disabled=true;document.getElementById('replayTimeline').innerHTML='<span class="muted">Start a replay to see moves.</span>';selected=null;targets=[];drawBoard();renderMoves()}
+
+let stockfishWorker=null,engineReady=false,engineWaiters=[],analysisBusy=false;
+function engineMessage(message){
+  const line=typeof message==='string'?message:(message&&message.data!==undefined?message.data:'');
+  if(line==='CM_ENGINE_LOADED'){engineReady=true;engineWaiters.splice(0).forEach(resolve=>resolve());return}
+  if(typeof line==='string'&&line.startsWith('CM_ENGINE_ERROR')){engineWaiters.splice(0).forEach((resolve)=>resolve(new Error(line)));return}
+}
+function getEngine(){
+  return new Promise((resolve,reject)=>{
+    if(stockfishWorker&&engineReady){resolve(stockfishWorker);return}
+    if(stockfishWorker){engineWaiters.push(()=>resolve(stockfishWorker));return}
+    try{
+      stockfishWorker=new Worker('./stockfish-worker.js');
+      stockfishWorker.onmessage=event=>{
+        const line=event.data;
+        if(line==='CM_ENGINE_LOADED'){engineReady=true;engineWaiters.splice(0).forEach(fn=>fn());return}
+        if(typeof line==='string'&&line.startsWith('CM_ENGINE_ERROR')){const error=new Error(line);engineWaiters.splice(0).forEach(fn=>fn(error));return}
+        if(stockfishWorker._pending&&typeof line==='string')stockfishWorker._pending(line);
+      };
+      stockfishWorker.onerror=()=>{const error=new Error('Stockfish worker failed to start. Check your connection and reload.');engineWaiters.splice(0).forEach(fn=>fn(error));reject(error)};
+      engineWaiters.push(err=>err?reject(err):resolve(stockfishWorker));
+      setTimeout(()=>{if(!engineReady)reject(new Error('Stockfish took too long to load. Check your internet connection and try again.'))},45000);
+    }catch(error){reject(error)}
+  });
+}
+function engineCommand(worker,command,finishOn,timeoutMs=45000){
+  return new Promise((resolve,reject)=>{
+    let latestInfo='',done=false;
+    const timer=setTimeout(()=>{if(done)return;done=true;worker._pending=null;reject(new Error('Stockfish analysis timed out.'))},timeoutMs);
+    worker._pending=line=>{
+      if(line.startsWith('info '))latestInfo=line;
+      if(finishOn(line)){if(done)return;done=true;clearTimeout(timer);worker._pending=null;resolve({line,info:latestInfo})}
+    };
+    worker.postMessage(command);
+  });
+}
+function parseEngineScore(info,fen){
+  const match=info.match(/score (cp|mate) (-?\d+)/);
+  if(!match)return null;
+  const turn=fen.split(' ')[1];
+  const value=Number(match[2]);
+  if(match[1]==='mate')return (turn==='w'?1:-1)*(value>0?10000:-10000);
+  return (turn==='w'?1:-1)*value;
+}
+function classifyMove(loss){
+  if(loss>180)return {name:'Blunder',kind:'blunder'};
+  if(loss>90)return {name:'Mistake',kind:'bad'};
+  if(loss>40)return {name:'Inaccuracy',kind:'bad'};
+  if(loss>18)return {name:'Inaccuracy',kind:'bad'};
+  return {name:'Good',kind:''};
+}
+function scoreAccuracy(losses){
+  if(!losses.length)return 0;
+  const avg=losses.reduce((a,b)=>a+b,0)/losses.length;
+  return Math.max(0,Math.min(100,Math.round(100-avg*0.18)));
+}
+async function analyseCurrentGame(){
+  if(analysisBusy)return;
+  const pgn=replayState&&replayState.liveGame?replayState.liveGame.pgn():game.pgn();
+  if(!pgn){toast('Play or load a game before analysing.');return}
+  const candidate=new Chess();
+  if(!candidate.load_pgn(pgn)||!candidate.history().length){toast('This game has no moves to analyse.');return}
+  analysisBusy=true;
+  const btn=document.getElementById('analyseGameBtn'),panel=document.getElementById('analysisPanel'),status=document.getElementById('analysisStatus'),results=document.getElementById('analysisResults'),progress=document.getElementById('analysisProgressBar');
+  panel.classList.remove('hidden');btn.disabled=true;btn.textContent='Analysing…';status.textContent='Loading engine';results.innerHTML='<p class="muted">Loading Stockfish. The first analysis needs an internet connection and may take a little while.</p>';progress.style.width='0%';
+  try{
+    const worker=await getEngine();
+    await engineCommand(worker,'uci',line=>line==='uciok',30000);
+    await engineCommand(worker,'isready',line=>line==='readyok',30000);
+    const moves=candidate.history({verbose:true}),replay=new Chess(),positions=[{fen:replay.fen(),ply:0,move:'Start',side:'—'}];
+    moves.forEach((move,i)=>{replay.move(move);positions.push({fen:replay.fen(),ply:i+1,move:move.san,side:i%2===0?'White':'Black'})});
+    const evaluations=[];
+    for(let i=0;i<positions.length;i++){
+      status.textContent='Analysing '+i+'/'+(positions.length-1);
+      worker._pending=null;
+      worker.postMessage('position fen '+positions[i].fen);
+      const output=await engineCommand(worker,'go depth 10',line=>line.startsWith('bestmove'),60000);
+      const cp=parseEngineScore(output.info,positions[i].fen);
+      const best=(output.info.match(/ pv (.+)$/)||[])[1]||'';
+      evaluations.push({cp:cp===null?0:cp,best});
+      progress.style.width=Math.round((i+1)/positions.length*100)+'%';
+    }
+    const whiteLoss=[],blackLoss=[],rows=[];
+    for(let i=1;i<positions.length;i++){
+      const before=evaluations[i-1].cp,after=evaluations[i].cp;
+      const mover=positions[i].side;
+      const loss=Math.max(0,mover==='White'?before-after:after-before);
+      (mover==='White'?whiteLoss:blackLoss).push(loss);
+      const classification=classifyMove(loss);
+      rows.push({ply:i,move:positions[i].move,side:mover,loss,classification,best:evaluations[i-1].best||''});
+    }
+    const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
+    document.getElementById('analysisSummary').innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+ba+'%</strong></div>';
+    results.innerHTML=rows.map(row=>'<div class="analysisMove"><strong>'+row.ply+'. '+row.side+'</strong><span>'+row.move+'</span><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span>'+(row.best?'<div class="analysisBest">Engine line: '+row.best+'</div>':'')+'</div>').join('');
+    status.textContent='Finished · depth 10';
+  }catch(error){
+    status.textContent='Could not complete';
+    results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">This prototype currently loads Stockfish from the internet. Offline engine bundling is still to come.</p>';
+  }finally{analysisBusy=false;btn.disabled=false;btn.textContent='♟ Analyse game with Stockfish'}
+}
+
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
 
 init();
