@@ -271,8 +271,12 @@ function renderEvalGraph(id,evaluations){
 }
 function scoreAccuracy(losses){
   if(!losses.length)return null;
-  const avg=losses.reduce((a,b)=>a+b,0)/losses.length;
-  return Math.max(0,Math.min(100,Math.round(100-avg*0.18)));
+  // A single forced-mate score or a shallow-search evaluation swing can be
+  // thousands of centipawns. Cap its contribution so it cannot flatten an
+  // entire player's accuracy to 0%; use a diminishing-return accuracy curve.
+  const normalized=losses.map(loss=>Math.max(0,Math.min(600,Number(loss)||0)));
+  const avg=normalized.reduce((a,b)=>a+b,0)/normalized.length;
+  return Math.max(1,Math.min(100,Math.round(100*Math.exp(-avg/350))));
 }
 function formatAccuracy(value){return value===null?'—':value+'%'}
 async function analyseCurrentGame(){return runGameAnalysis('quick')}
@@ -289,7 +293,7 @@ async function runGameAnalysis(mode,force=false){
   const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
   const summary=document.getElementById(prefix+'Summary');
   const moveTime=deep?1200:200,timeout=deep?30000:15000;
-  const cacheKey='chessMasterAnalysisV4:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV5:'+mode+':'+hashAnalysisText(pgn);
   // A fresh tap on Analyse must actually start Stockfish. Do not short-circuit
   // the first review by showing an old cached result and changing the button.
   if(!force && btn.dataset.hasAnalysis==='true'){
