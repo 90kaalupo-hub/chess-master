@@ -311,7 +311,8 @@ async function runGameAnalysis(mode,force=false){
       const loss=Math.max(0,mover==='White'?before-after:after-before);
       (mover==='White'?whiteLoss:blackLoss).push(loss);
       const brilliant=isBrilliantSacrifice(positions[i-1].fen,positions[i].fen,evaluations[i].best,mover,loss);
-      const played=moves[i-1];\n      rows.push({ply:i,move:positions[i].move,side:mover,loss,classification:classifyMove(loss,brilliant),best:uciPvToSan(positions[i-1].fen,evaluations[i-1].best),fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
+      const played=moves[i-1];
+      rows.push({ply:i,move:positions[i].move,side:mover,loss,classification:classifyMove(loss,brilliant),best:uciPvToSan(positions[i-1].fen,evaluations[i-1].best),fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
     try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,createdAt:new Date().toISOString()}))}catch(e){}
