@@ -34,7 +34,9 @@ No paid hosting is required for a public GitHub Pages site, subject to GitHub's 
 - Engine candidate selected for the browser prototype: **Stockfish.js 19.0.1, lite single-threaded WebAssembly**. Its published size is approximately 1.7 MB, and the single-threaded build does not require cross-origin isolation headers, which suits GitHub Pages and Android browsers.
 - The intended release will serve the engine files from this repository (not rely on a live CDN), cache them through the PWA service worker, and run analysis in a Web Worker so the board remains responsive.
 - Before distributing the engine, include the exact matching GPL-3.0 licence and corresponding source/build notices for the exact Stockfish.js release. Stockfish.js is GPL-3.0; see the [upstream package and build documentation](https://github.com/nmrugg/stockfish.js).
-- **Status:** the engine files and analysis UI are not integrated yet. The next implementation step is to add and verify the exact engine assets and UCI worker before enabling analysis in the app.
+- Add a first analysis prototype: run the lite single-threaded engine in a Web Worker, evaluate each position at depth 10, show estimated accuracy and move-loss labels, and display the engine's principal variation.
+- The prototype currently loads the pinned engine JavaScript and WASM from jsDelivr; first use requires internet. The service worker attempts to cache these engine responses for repeat/offline use, which still needs real-device verification.
+- The engine is not yet bundled in this repository. Offline operation, engine score orientation, accuracy calibration, move-classification thresholds, and mobile performance must be verified before calling analysis complete.
 
 ## Later roadmap
 
