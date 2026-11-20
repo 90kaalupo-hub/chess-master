@@ -35,7 +35,7 @@
 <div class="gameHead"><div><div class="eyebrow">Local game</div><h1 style="font-size:28px">Play chess</h1><p class="sub" id="gameStatus">White to move</p></div><button class="secondary" onclick="showHome()">← Home</button></div>
 <div class="gameLayout"><div class="boardWrap"><div class="player"><strong>♚ Black</strong><strong id="blackLabel">Ready</strong></div><div class="gameBoard" id="board" role="grid" aria-label="Interactive chessboard"></div><div class="player"><strong>♔ White</strong><strong id="whiteLabel" class="turn">To move</strong></div></div>
 <div class="gameDecisionButtons boardDecisionButtons" aria-label="Game result actions"><button class="primary" id="offerDrawBtn" onclick="offerDraw()">½ Offer draw</button><button class="secondary resignAction" id="resignBtn" onclick="resignGame()">⚑ Resign</button></div>
-<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="soundControls"><div><strong>♬ Chess sound effects</strong><div class="soundVolume"><label for="soundVolume">Volume</label><input id="soundVolume" type="range" min="0" max="100" step="5" value="65" oninput="setSoundVolume(this.value)"><span id="soundVolumeValue">65%</span></div></div><button id="soundToggle" type="button" onclick="toggleSound()">Sound: On</button></div><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()" disabled>▶ Play</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><div class="analysisRatingControls"><span class="analysisRatingTitle">Player ratings for expected-points estimates</span><label>White <input id="analysisWhiteRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><label>Black <input id="analysisBlackRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><span class="analysisRatingHint">Set approximate ratings · default 1200 each</span></div><button class="primary" id="analyseGameBtn" style="width:100%;margin-top:9px" onclick="analyseCurrentGame()">♟ Analyse game with Stockfish</button><section id="analysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Quick Analysis</h2><span id="analysisStatus" class="muted">Ready</span></div><p class="muted">Fast overview · shorter engine thinking time.</p><div class="analysisSummary" id="analysisSummary"></div><div class="analysisGraph" id="analysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="analysisProgressBar"></div></div><div id="analysisResults" class="analysisResults"><p class="muted">Run Quick Analysis to see move feedback.</p></div></section><button class="secondary" id="deepAnalyseBtn" style="width:100%;margin-top:10px" onclick="analyseCurrentGameDeep()">♟ Run Deep Analysis</button><section id="deepAnalysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Deep Analysis</h2><span id="deepAnalysisStatus" class="muted">Ready</span></div><p class="muted">More engine thinking per position for a closer review. This takes longer, especially for long games.</p><div class="analysisSummary" id="deepAnalysisSummary"></div><div class="analysisGraph" id="deepAnalysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run deep analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="deepAnalysisProgressBar"></div></div><div id="deepAnalysisResults" class="analysisResults"><p class="muted">Run Deep Analysis separately when you want a more detailed review.</p></div></section><div class="status" id="result">Game in progress</div></aside></div>
+<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="soundControls"><div><strong>♬ Chess sound effects</strong><div class="soundVolume"><label for="soundVolume">Volume</label><input id="soundVolume" type="range" min="0" max="100" step="5" value="65" oninput="setSoundVolume(this.value)"><span id="soundVolumeValue">65%</span></div></div><button id="soundToggle" type="button" onclick="toggleSound()">Sound: On</button></div><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()" disabled>▶ Play</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><div class="analysisRatingControls"><span class="analysisRatingTitle">Player ratings for expected-points estimates</span><label>White <input id="analysisWhiteRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><label>Black <input id="analysisBlackRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><span class="analysisRatingHint">Set approximate ratings · default 1200 each</span></div><button class="primary" id="analyseGameBtn" style="width:100%;margin-top:9px" onclick="analyseCurrentGame()">♟ Analyse game with Stockfish</button><section id="analysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Quick Analysis</h2><span id="analysisStatus" class="muted">Ready</span></div><p class="muted">Fast overview · shorter engine thinking time.</p><div class="analysisSummary" id="analysisSummary"></div><div class="analysisGraph" id="analysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="analysisProgressBar"></div></div><div id="analysisResults" class="analysisResults"><p class="muted">Run Quick Analysis to see move feedback.</p></div></section><button class="secondary" id="deepAnalyseBtn" style="width:100%;margin-top:10px" onclick="analyseCurrentGameDeep()">♟ Run Deep Analysis</button><section id="deepAnalysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Deep Analysis</h2><span id="deepAnalysisStatus" class="muted">Ready</span></div><p class="muted">More engine thinking per position for a closer review. This takes longer, especially for long games.</p><div class="analysisSummary" id="deepAnalysisSummary"></div><div class="analysisGraph" id="deepAnalysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run deep analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="deepAnalysisProgressBar"></div></div><div id="deepAnalysisResults" class="analysisResults"><p class="muted">Run Deep Analysis separately when you want a more detailed review.</p></div></section><button class="secondary" id="chessComAnalyseBtn" style="width:100%;margin-top:10px" onclick="analyseChessComStyle()">♟ Chess.com-style Review</button><section id="chessComAnalysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Chess.com-style Review</h2><span id="chessComAnalysisStatus" class="muted">Ready</span></div><p class="muted">Separate rating-aware review · longer Stockfish search · expected-points move labels and accuracy estimate. This is Chess Master's independent implementation, not Chess.com's proprietary Game Review.</p><div class="analysisSummary" id="chessComAnalysisSummary"></div><div class="analysisGraph" id="chessComAnalysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run this review to build the evaluation graph.</p></div><div class="analysisProgress"><div id="chessComAnalysisProgressBar"></div></div><div id="chessComAnalysisResults" class="analysisResults"><p class="muted">Run Chess.com-style Review for the separate detailed report.</p></div></section><div class="status" id="result">Game in progress</div></aside></div>
 </section>
 <section id="importPanel" class="hidden" style="margin-top:20px;background:white;border:1px solid var(--line);border-radius:16px;padding:16px"><div class="gameHead"><div><h2>Import PGN</h2><p class="sub">Paste a PGN game to load its final position and move list.</p></div><button class="secondary" onclick="hideImport()">Close</button></div><textarea id="pgnInput" class="field" placeholder='[Event "Casual Game"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><div class="actions"><button class="primary" onclick="loadPGN()">Load PGN</button><button class="secondary" onclick="document.getElementById('pgnInput').value=''">Clear</button></div><p class="muted" id="importStatus"></p></section>
 </main>
@@ -277,7 +277,7 @@ const analysisCategoryDefinitions=[
   {name:'Great',color:'#16a36a'},{name:'Brilliant',color:'#8b5cf6'},
   {name:'Miss',color:'#c04d72'},{name:'Book',color:'#6686a8'}
 ];
-let analysisRowsByMode={quick:[],deep:[]};
+let analysisRowsByMode={quick:[],deep:[],chesscom:[]};
 function renderAnalysisSummary(wa,ba,rows){
   const counts=Object.fromEntries(analysisCategoryDefinitions.map(item=>[item.name,0]));
   (rows||[]).forEach(row=>{const name=row.classification&&row.classification.name;if(Object.prototype.hasOwnProperty.call(counts,name))counts[name]++;});
@@ -289,8 +289,8 @@ function selectAnalysisCategory(name,button){
   document.querySelectorAll('.analysisCountButton').forEach(item=>item.setAttribute('aria-pressed',item.dataset.category===selectedAnalysisCategory?'true':'false'));
   const panel=button&&button.closest('.analysisPanel');
   if(!panel)return;
-  const deep=panel.id==='deepAnalysisPanel',results=panel.querySelector('.analysisResults');
-  const rows=analysisRowsByMode[deep?'deep':'quick']||[];
+  const mode=panel.id==='deepAnalysisPanel'?'deep':panel.id==='chessComAnalysisPanel'?'chesscom':'quick',results=panel.querySelector('.analysisResults');
+  const rows=analysisRowsByMode[mode]||[];
   if(results)results.innerHTML=renderAnalysisRows(rows);
   if(selectedAnalysisCategory&&results){
     const first=results.querySelector('.analysisMove.categoryMatch');
@@ -371,19 +371,24 @@ function renderEvalGraph(id,evaluations){
 function formatAccuracy(value){return value===null?'—':value+'%'}
 async function analyseCurrentGame(){return runGameAnalysis('quick')}
 async function analyseCurrentGameDeep(){return runGameAnalysis('deep')}
+async function analyseChessComStyle(){return runGameAnalysis('chesscom')}
 async function runGameAnalysis(mode,force=false){
   if(analysisBusy)return;
   let pgn=game.pgn();if(replayState){const replayPGN=new Chess();replayState.moves.forEach(move=>replayPGN.move(move));pgn=replayPGN.pgn();}
   if(!pgn){toast('Play or load a game before analysing.');return}
   const candidate=new Chess();
   if(!candidate.load_pgn(pgn)||!candidate.history().length){toast('This game has no moves to analyse.');return}
-  const deep=mode==='deep',prefix=deep?'deepAnalysis':'analysis';
-  const btn=document.getElementById(deep?'deepAnalyseBtn':'analyseGameBtn');
-  const panel=document.getElementById(deep?'deepAnalysisPanel':'analysisPanel');
+  const modes={
+    quick:{deep:false,prefix:'analysis',button:'analyseGameBtn',panel:'analysisPanel',moveTime:200,timeout:15000,label:'Quick'},
+    deep:{deep:true,prefix:'deepAnalysis',button:'deepAnalyseBtn',panel:'deepAnalysisPanel',moveTime:1200,timeout:30000,label:'Deep'},
+    chesscom:{deep:false,prefix:'chessComAnalysis',button:'chessComAnalyseBtn',panel:'chessComAnalysisPanel',moveTime:3000,timeout:90000,label:'Chess.com-style'}
+  };
+  const config=modes[mode];if(!config)throw new Error('Unknown analysis mode');
+  const {deep,prefix,moveTime,timeout,label}=config;
+  const btn=document.getElementById(config.button),panel=document.getElementById(config.panel);
   const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
   const summary=document.getElementById(prefix+'Summary');
-  const moveTime=deep?1200:200,timeout=deep?30000:15000;
-  const cacheKey='chessMasterAnalysisV12:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV13:'+mode+':'+hashAnalysisText(pgn);
   // A fresh tap on Analyse must actually start Stockfish. Do not short-circuit
   // the first review by showing an old cached result and changing the button.
   if(!force && btn.dataset.hasAnalysis==='true'){
@@ -393,12 +398,12 @@ async function runGameAnalysis(mode,force=false){
         analysisRowsByMode[mode]=saved.rows;
         summary.innerHTML=renderAnalysisSummary(saved.wa,saved.ba,saved.rows);
         results.innerHTML=renderAnalysisRows(saved.rows);
-        renderEvalGraph(prefix+'Graph',saved.evaluations);progress.style.width='100%';status.textContent=(deep?'Deep':'Quick')+' analysis · saved result';btn.dataset.hasAnalysis='true';btn.textContent='↻ Reanalyse';btn.onclick=()=>runGameAnalysis(mode,true);return;
+        renderEvalGraph(prefix+'Graph',saved.evaluations);progress.style.width='100%';status.textContent=label+' analysis · saved result';btn.dataset.hasAnalysis='true';btn.textContent='↻ Reanalyse';btn.onclick=()=>runGameAnalysis(mode,true);return;
       }
     }catch(e){}
   }
-  analysisBusy=true;panel.classList.remove('hidden');btn.disabled=true;btn.textContent=deep?'Deep analysis running…':'Quick analysis running…';
-  status.textContent='Starting local engine';results.innerHTML='<p class="muted">'+(deep?'Deep Analysis is preparing Stockfish. It will spend about 1.2 seconds on each position.':'Loading the local Stockfish engine. Quick Analysis will begin automatically when ready.')+'</p>';summary.innerHTML='';progress.style.width='0%';
+  analysisBusy=true;panel.classList.remove('hidden');btn.disabled=true;btn.textContent=label+' review running…';
+  status.textContent='Starting local engine';results.innerHTML='<p class="muted">'+(mode==='chesscom'?'Preparing the extended review. Stockfish will spend about 3 seconds on each position.':deep?'Deep Analysis is preparing Stockfish. It will spend about 1.2 seconds on each position.':'Loading the local Stockfish engine. Quick Analysis will begin automatically when ready.')+'</p>';summary.innerHTML='';progress.style.width='0%';
   try{
     const worker=await getEngine();
     status.textContent='Preparing Stockfish';
@@ -409,7 +414,7 @@ async function runGameAnalysis(mode,force=false){
     moves.forEach((move,i)=>{replay.move(move);positions.push({fen:replay.fen(),ply:i+1,move:move.san,side:i%2===0?'White':'Black'})});
     const evaluations=[];
     for(let i=0;i<positions.length;i++){
-      status.textContent=(deep?'Deep analysis':'Quick analysis')+' · position '+(i+1)+' of '+positions.length;
+      status.textContent=label+' analysis · position '+(i+1)+' of '+positions.length;
       worker._pending=null;worker.postMessage('position fen '+positions[i].fen);
       const output=await engineCommand(worker,'go movetime '+moveTime,line=>line.startsWith('bestmove'),timeout);
       const cp=parseEngineScore(output.info,positions[i].fen);
@@ -448,12 +453,12 @@ async function runGameAnalysis(mode,force=false){
     results.innerHTML=renderAnalysisRows(rows);
     renderEvalGraph(prefix+'Graph',evaluations);
     btn.dataset.hasAnalysis='true';btn.onclick=()=>runGameAnalysis(mode,true);
-    status.textContent=(deep?'Deep':'Quick')+' analysis complete · '+moveTime+' ms per position';
+    status.textContent=label+' analysis complete · '+moveTime+' ms per position';
   }catch(error){
     status.textContent='Could not complete';
     results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">Chess Master is using its locally hosted Stockfish engine. Check that the page and engine files have finished loading, then retry.</p>';
   }finally{
-    analysisBusy=false;btn.disabled=false;btn.textContent=btn.dataset.hasAnalysis==='true'?'↻ Reanalyse':(deep?'♟ Run Deep Analysis':'♟ Analyse game with Stockfish');
+    analysisBusy=false;btn.disabled=false;btn.textContent=btn.dataset.hasAnalysis==='true'?'↻ Reanalyse':(mode==='chesscom'?'♟ Chess.com-style Review':deep?'♟ Run Deep Analysis':'♟ Analyse game with Stockfish');
   }
 }
 
