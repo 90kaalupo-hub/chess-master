@@ -87,7 +87,7 @@ function hideDraw(){const overlay=document.getElementById('drawOverlay');if(over
 function offerDraw(){if(replayState||manualGameResult||!game||game.game_over()){toast('A draw cannot be offered now.');return}document.getElementById('drawOfferOverlay').classList.add('show')}
 function closeDrawOffer(){document.getElementById('drawOfferOverlay').classList.remove('show')}
 function declineDrawOffer(){closeDrawOffer();toast('Draw offer declined. Play continues.')}
-function acceptDrawOffer(){closeDrawOffer();manualGameResult='Draw by agreement';selected=null;targets=[];saveCurrentGame();updateStatus();drawBoard();showDraw('Draw agreed','Both players accepted the draw. The game has ended.','draw')}
+function acceptDrawOffer(){if(!confirm('Are both players sure they want to accept the draw? The game will end as a draw.'))return;closeDrawOffer();manualGameResult='Draw by agreement';selected=null;targets=[];saveCurrentGame();updateStatus();drawBoard();showDraw('Draw agreed','Both players accepted the draw. The game has ended.','draw')}
 function resignGame(){if(replayState||manualGameResult||!game||game.game_over()){toast('This game has already ended.');return}const side=game.turn()==='w'?'White':'Black';if(!confirm(side+' to move: are you sure you want to resign?'))return;manualGameResult=side+' resigned — '+(side==='White'?'Black':'White')+' wins';selected=null;targets=[];saveCurrentGame();updateStatus();drawBoard();toast(side+' resigned. '+(side==='White'?'Black':'White')+' wins.')}
 
 
