@@ -158,10 +158,11 @@ function renderEvalGraph(id,evaluations){
   el.innerHTML='<div class="analysisGraphHead"><span>Evaluation trend</span><span>'+label+'</span></div><svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Evaluation graph, white advantage above centre and black advantage below"><line class="evalZero" x1="0" y1="'+mid+'" x2="'+w+'" y2="'+mid+'"/><path class="evalArea" d="'+area+'"/><path class="evalLine" d="'+line+'"/></svg><div class="analysisGraphFoot"><span>Game start</span><span>White advantage ↑</span><span>Game end</span></div>';
 }
 function scoreAccuracy(losses){
-  if(!losses.length)return 0;
+  if(!losses.length)return null;
   const avg=losses.reduce((a,b)=>a+b,0)/losses.length;
   return Math.max(0,Math.min(100,Math.round(100-avg*0.18)));
 }
+function formatAccuracy(value){return value===null?'—':value+'%'}
 async function analyseCurrentGame(){return runGameAnalysis('quick')}
 async function analyseCurrentGameDeep(){return runGameAnalysis('deep')}
 async function runGameAnalysis(mode,force=false){
@@ -181,7 +182,7 @@ async function runGameAnalysis(mode,force=false){
     try{
       const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');
       if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
-        summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+saved.wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+saved.ba+'%</strong></div>';
+        summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+formatAccuracy(saved.wa)+'</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+formatAccuracy(saved.ba)+'</strong></div>';
         results.innerHTML=saved.rows.map(row=>'<article class="analysisMove"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+row.side+'</span><span class="analysisNotation">'+row.move+'</span></div><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span><div class="analysisExplanation">'+explainMove(row.loss,row.classification)+'</div>'+(row.best?'<div class="analysisBest"><strong>Engine suggestion</strong> · '+row.best+'</div>':'')+'</article>').join('');
         renderEvalGraph(prefix+'Graph',saved.evaluations);progress.style.width='100%';status.textContent=(deep?'Deep':'Quick')+' analysis · saved result';btn.dataset.hasAnalysis='true';btn.textContent='↻ Reanalyse';btn.onclick=()=>runGameAnalysis(mode,true);return;
       }
@@ -216,7 +217,7 @@ async function runGameAnalysis(mode,force=false){
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
     try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,createdAt:new Date().toISOString()}))}catch(e){}
-    summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+ba+'%</strong></div>';
+    summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+formatAccuracy(wa)+'</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+formatAccuracy(ba)+'</strong></div>';
     results.innerHTML=rows.map(row=>'<article class="analysisMove"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+row.side+'</span><span class="analysisNotation">'+row.move+'</span></div><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span><div class="analysisExplanation">'+explainMove(row.loss,row.classification)+'</div>'+(row.best?'<div class="analysisBest"><strong>Engine suggestion</strong> · '+row.best+'</div>':'')+'</article>').join('');
     renderEvalGraph(prefix+'Graph',evaluations);
     btn.dataset.hasAnalysis='true';btn.onclick=()=>runGameAnalysis(mode,true);
