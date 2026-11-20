@@ -89,7 +89,7 @@ function getEngine(){
       reject(error instanceof Error?error:new Error(String(error||'Stockfish failed to load.')));
     };
     try{
-      stockfishWorker=new Worker('./stockfish-worker.js');
+      stockfishWorker=new Worker('./stockfish-worker-local.js');
       const worker=stockfishWorker;
       worker.onmessage=event=>{
         const line=event.data;
@@ -186,7 +186,7 @@ async function analyseCurrentGame(){
     status.textContent='Finished · depth 10';
   }catch(error){
     status.textContent='Could not complete';
-    results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">This prototype currently loads Stockfish from the internet. Offline engine bundling is still to come.</p>';
+    results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">Chess Master is configured to use its locally hosted Stockfish engine. Check that the page and engine files have finished loading, then retry.</p>';
   }finally{analysisBusy=false;btn.disabled=false;btn.textContent='♟ Analyse game with Stockfish'}
 }
 
