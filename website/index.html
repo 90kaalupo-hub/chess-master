@@ -158,7 +158,7 @@ function parseEngineScore(info,fen){
   return (turn==='w'?1:-1)*value;
 }
 function classifyMove(loss,isBrilliant=false){
-  if(isBrilliant&&loss<=15)return {name:'Brilliant',kind:'brilliant'};
+  if(isBrilliant)return {name:'Brilliant',kind:'brilliant'};
   if(loss>120)return {name:'Blunder',kind:'blunder'};
   if(loss>60)return {name:'Mistake',kind:'bad'};
   if(loss>25)return {name:'Inaccuracy',kind:'bad'};
@@ -178,7 +178,7 @@ function isBrilliantSacrifice(beforeFen,afterFen,replyPv,mover,loss,played){
   // A sound sacrifice may be declined by the engine's best defence. Detect
   // whether the moved piece is legally capturable, rather than requiring the
   // PV to accept it. Keep the move-quality gate to avoid tagging bad hangs.
-  if(!Number.isFinite(loss)||loss>35||!played||!played.to)return false;
+  if(!Number.isFinite(loss)||loss>80||!played||!played.to)return false;
   try{
     const after=new Chess(afterFen),board=after.board();
     const target=board[8-Number(played.to[1])][played.to.charCodeAt(0)-97];
@@ -297,7 +297,7 @@ async function runGameAnalysis(mode,force=false){
   const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
   const summary=document.getElementById(prefix+'Summary');
   const moveTime=deep?1200:200,timeout=deep?30000:15000;
-  const cacheKey='chessMasterAnalysisV8:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV9:'+mode+':'+hashAnalysisText(pgn);
   // A fresh tap on Analyse must actually start Stockfish. Do not short-circuit
   // the first review by showing an old cached result and changing the button.
   if(!force && btn.dataset.hasAnalysis==='true'){
