@@ -138,6 +138,11 @@ function explainMove(loss,classification){
   if(classification.name==='Great')return 'This move kept the evaluation very close to the engine assessment.';
   return 'A solid move that kept most of the position’s evaluation.';
 }
+function hashAnalysisText(value){
+  let hash=2166136261;
+  for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619)}
+  return (hash>>>0).toString(16);
+}
 function renderEvalGraph(id,evaluations){
   const el=document.getElementById(id);if(!el||!evaluations.length)return;
   const w=640,h=112,pad=8,mid=h/2,scale=mid/500;
@@ -159,7 +164,7 @@ function scoreAccuracy(losses){
 }
 async function analyseCurrentGame(){return runGameAnalysis('quick')}
 async function analyseCurrentGameDeep(){return runGameAnalysis('deep')}
-async function runGameAnalysis(mode){
+async function runGameAnalysis(mode,force=false){
   if(analysisBusy)return;
   let pgn=game.pgn();if(replayState){const replayPGN=new Chess();replayState.moves.forEach(move=>replayPGN.move(move));pgn=replayPGN.pgn();}
   if(!pgn){toast('Play or load a game before analysing.');return}
@@ -171,6 +176,17 @@ async function runGameAnalysis(mode){
   const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
   const summary=document.getElementById(prefix+'Summary');
   const moveTime=deep?1200:200,timeout=deep?30000:15000;
+  const cacheKey='chessMasterAnalysisV1:'+mode+':'+hashAnalysisText(pgn);
+  if(!force){
+    try{
+      const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');
+      if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
+        summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+saved.wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+saved.ba+'%</strong></div>';
+        results.innerHTML=saved.rows.map(row=>'<article class="analysisMove"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+row.side+'</span><span class="analysisNotation">'+row.move+'</span></div><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span><div class="analysisExplanation">'+explainMove(row.loss,row.classification)+'</div>'+(row.best?'<div class="analysisBest"><strong>Engine suggestion</strong> · '+row.best+'</div>':'')+'</article>').join('');
+        renderEvalGraph(prefix+'Graph',saved.evaluations);progress.style.width='100%';status.textContent=(deep?'Deep':'Quick')+' analysis · saved result';btn.dataset.hasAnalysis='true';btn.textContent='↻ Reanalyse';btn.onclick=()=>runGameAnalysis(mode,true);return;
+      }
+    }catch(e){}
+  }
   analysisBusy=true;panel.classList.remove('hidden');btn.disabled=true;btn.textContent=deep?'Deep analysis running…':'Quick analysis running…';
   status.textContent='Starting local engine';results.innerHTML='<p class="muted">'+(deep?'Deep Analysis is preparing Stockfish. It will spend about 1.2 seconds on each position.':'Loading the local Stockfish engine. Quick Analysis will begin automatically when ready.')+'</p>';summary.innerHTML='';progress.style.width='0%';
   try{
@@ -199,15 +215,17 @@ async function runGameAnalysis(mode){
       rows.push({ply:i,move:positions[i].move,side:mover,loss,classification:classifyMove(loss),best:evaluations[i-1].best||''});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
+    try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,createdAt:new Date().toISOString()}))}catch(e){}
     summary.innerHTML='<div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+wa+'%</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+ba+'%</strong></div>';
     results.innerHTML=rows.map(row=>'<article class="analysisMove"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+row.side+'</span><span class="analysisNotation">'+row.move+'</span></div><span class="analysisTag '+row.classification.kind+'">'+row.classification.name+'</span><div class="analysisExplanation">'+explainMove(row.loss,row.classification)+'</div>'+(row.best?'<div class="analysisBest"><strong>Engine suggestion</strong> · '+row.best+'</div>':'')+'</article>').join('');
     renderEvalGraph(prefix+'Graph',evaluations);
+    btn.dataset.hasAnalysis='true';btn.onclick=()=>runGameAnalysis(mode,true);
     status.textContent=(deep?'Deep':'Quick')+' analysis complete · '+moveTime+' ms per position';
   }catch(error){
     status.textContent='Could not complete';
     results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">Chess Master is using its locally hosted Stockfish engine. Check that the page and engine files have finished loading, then retry.</p>';
   }finally{
-    analysisBusy=false;btn.disabled=false;btn.textContent=deep?'♟ Run Deep Analysis':'♟ Analyse game with Stockfish';
+    analysisBusy=false;btn.disabled=false;btn.textContent=btn.dataset.hasAnalysis==='true'?'↻ Reanalyse':(deep?'♟ Run Deep Analysis':'♟ Analyse game with Stockfish');
   }
 }
 
