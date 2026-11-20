@@ -1,15 +1,32 @@
 # Chess Master
 
-An Android-first chess game analyser.
+A mobile-first chess website, built website-first with an Android app planned after the web experience is stable.
 
-## Planned features
+## Website
 
-- Paste a public Chess.com game URL
-- Import a PGN file or paste PGN text
-- Replay moves on an interactive chessboard
-- Analyse positions with Stockfish
-- Show move classifications, evaluation, and an evaluation graph
+Open `website/index.html` locally or deploy the `website/` directory as the site root.
 
-## Build status
+### v0.1 foundation
+- Responsive Chess Master dashboard
+- Local two-player chessboard with legal move validation
+- Undo, board flip, new game, check/checkmate/draw status
+- PGN import and export
+- Move-by-move replay controls
+- Up to 30 recent games saved locally on the device
+- Installable PWA manifest and service-worker caching
+- Offline fallback page
 
-Project source and the Android APK build workflow are still to be added.
+The chess rules library is loaded from cdnjs. The service worker attempts to cache it after the first successful online load for later offline use. Offline behavior should still be tested on the target browser/device; first-time use requires an internet connection.
+
+## Free hosting with GitHub Pages
+
+1. In the repository, open **Settings → Pages**.
+2. Under **Build and deployment**, select **Deploy from a branch**.
+3. Choose branch **main** and folder **/website**, then save.
+4. Wait for GitHub Pages to publish and use the URL shown in Settings → Pages.
+
+No paid hosting is required for a public GitHub Pages site, subject to GitHub's current account and repository limits.
+
+## Roadmap
+
+Stockfish analysis, Chess.com import, offline AI bots, puzzles, lessons, profiles, accounts, premium features and online multiplayer are later milestones, not yet implemented.
