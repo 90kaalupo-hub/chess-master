@@ -171,6 +171,7 @@ function classifyMove(cpLoss,flags={}){
   // Mate outcomes take priority over ordinary centipawn bands.
   if(flags.mateDelivered)return {name:'Best',kind:'best'};
   if(flags.mateLoss)return {name:'Blunder',kind:'blunder'};
+  if(flags.missedMate)return {name:'Miss',kind:'miss'};
   if(flags.brilliant)return {name:'Brilliant',kind:'brilliant'};
   if(flags.great)return {name:'Great',kind:'great'};
   if(flags.miss)return {name:'Miss',kind:'miss'};
@@ -182,7 +183,7 @@ function classifyMove(cpLoss,flags={}){
   // heuristics, not Chess.com's private CAPS2 thresholds.
   if(cpLoss<=5)return {name:'Best',kind:'best'};
   if(cpLoss<=20)return {name:'Excellent',kind:'excellent'};
-  if(cpLoss<=25)return {name:'Good',kind:'good'};
+  if(cpLoss<=30)return {name:'Good',kind:'good'};
   if(cpLoss<=100)return {name:'Inaccuracy',kind:'inaccuracy'};
   if(cpLoss<=200)return {name:'Mistake',kind:'mistake'};
   return {name:'Blunder',kind:'blunder'};
@@ -325,7 +326,7 @@ function renderAnalysisRows(rows){
     const category=row.classification&&row.classification.name;
     const match=selectedAnalysisCategory&&category===selectedAnalysisCategory;
     const rowClass=selectedAnalysisCategory?(match?' categoryMatch':' categoryDim'):'';
-    const loss=row.mateLoss?' This move allows a forced checkmate.':row.mateDelivered?' This move delivers checkmate.':Number.isFinite(Number(row.loss))?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
+    const loss=row.mateLoss?' This move allows a forced checkmate.':row.missedMate?' This move misses a forced checkmate.':row.mateDelivered?' This move delivers checkmate.':Number.isFinite(Number(row.loss))?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
     const explore=row.best?'<button type="button" class="variationToggle" onclick="toggleVariation('+index+')">Explore engine line</button><div class="variationPanel hidden" id="variationPanel'+index+'"></div>':'';
     return '<article class="analysisMove'+rowClass+'"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+escapeAnalysisText(row.side)+'</span><span class="analysisNotation">'+escapeAnalysisText(row.move)+'</span></div><span class="analysisTag '+escapeAnalysisText(row.classification.kind)+'">'+escapeAnalysisText(row.classification.name)+'</span><div class="analysisExplanation">'+escapeAnalysisText(explainMove(row))+loss+'</div>'+explore+'</article>';
   }).join('');
@@ -333,6 +334,7 @@ function renderAnalysisRows(rows){
 function explainMove(row){
   const name=row.classification.name,move=row.move||'',side=row.side||'The player',best=row.best||'';
   if(row.mateLoss)return side+' allowed a forced checkmate. The engine found a move that avoided the forced mate.';
+  if(row.missedMate)return side+' missed a forced checkmate opportunity.';
   if(row.mateDelivered)return side+' delivered checkmate.';
   if(name==='Brilliant')return side+' found a sound, high-value piece sacrifice according to the current engine search. Verify the tactical line before treating it as definitive.';
   if(name==='Great')return side+' found a critical move. It appears to be the only legal continuation in this position.';
@@ -520,13 +522,14 @@ async function runGameAnalysis(mode,force=false){
       let legalCount=0;try{legalCount=new Chess(positions[i-1].fen).moves().length}catch(error){}
       const moverBefore=mover==='White'?before:-before,moverAfter=mover==='White'?after:-after;
       const mateThreshold=ANALYSIS_MATE_SCORE-100;
-      const mateLoss=(moverBefore>-mateThreshold&&moverAfter<=-mateThreshold)||(moverBefore>=mateThreshold&&moverAfter<mateThreshold);
+      const mateLoss=moverBefore>-mateThreshold&&moverAfter<=-mateThreshold;
+      const missedMate=moverBefore>=mateThreshold&&moverAfter<mateThreshold;
       const mateDelivered=/#$/.test(played.san);
       const great=!exactBest&&cpLoss<=20&&legalCount===1;
       const sacrifice=isBrilliantSacrifice(positions[i-1].fen,positions[i].fen,evaluations[i].best,mover,cpLoss,played);
       const brilliant=sacrifice&&cpLoss<=20&&beforePoints<0.95&&afterPoints>0.35;
-      const classification=classifyMove(cpLoss,{brilliant,great,miss,book,best:exactBest,mateLoss,mateDelivered});
-      rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,expectedLoss,mateLoss,mateDelivered,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
+      const classification=classifyMove(cpLoss,{brilliant,great,miss,book,best:exactBest,mateLoss,missedMate,mateDelivered});
+      rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,expectedLoss,mateLoss,missedMate,mateDelivered,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
     try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,ratings:{White:ratings.White,Black:ratings.Black},createdAt:new Date().toISOString()}))}catch(e){}
