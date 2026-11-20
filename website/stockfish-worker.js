@@ -1,25 +1,15 @@
-/* Chess Master Stockfish UCI bridge.
- * Stockfish.js is loaded from the pinned npm release; see STOCKFISH-LICENSE.md.
- * First analysis requires internet. The service worker attempts to cache the engine.
+/* Chess Master Stockfish UCI worker bootstrap.
+ * Engine: stockfish@19.0.1 lite single-threaded. See STOCKFISH-LICENSE.md.
+ * First use requires internet; the service worker may cache engine responses.
  */
-const ENGINE_BASE='https://cdn.jsdelivr.net/npm/stockfish@19.0.1/bin/';
-const ENGINE_FILE='stockfish-19-lite-single.js';
-let ready=false, queue=[], busy=false;
-self.Module={
-  locateFile(path){return ENGINE_BASE+path;}
-};
-try{
-  importScripts(ENGINE_BASE+ENGINE_FILE);
-  ready=true;
-  self.postMessage({type:'loaded'});
-}catch(error){
-  self.postMessage({type:'error',message:'Could not load Stockfish engine: '+(error&&error.message||error)});
-}
-self.onmessage=function(event){
-  const data=event.data||{};
-  if(data.type==='uci'){if(ready)self.postMessage({type:'command',command:'uci'});return;}
-  if(data.type==='send'&&typeof data.command==='string'){
-    if(!ready){self.postMessage({type:'error',message:'Stockfish is not loaded yet.'});return;}
-    self.postMessage({type:'command',command:data.command});
+var Module={
+  locateFile:function(path){
+    return 'https://cdn.jsdelivr.net/npm/stockfish@19.0.1/bin/'+path;
   }
 };
+try{
+  importScripts('https://cdn.jsdelivr.net/npm/stockfish@19.0.1/bin/stockfish-19-lite-single.js');
+  postMessage('CM_ENGINE_LOADED');
+}catch(error){
+  postMessage('CM_ENGINE_ERROR '+(error&&error.message||String(error)));
+}
