@@ -154,7 +154,7 @@ function escapeAnalysisText(value){return String(value??'').replace(/[&<>"']/g,c
 function uciPvToSan(fen,pv){
   if(!pv)return '';
   try{
-    const position=new Chess(fen),tokens=String(pv).trim().split(/\\s+/),san=[];
+    const position=new Chess(fen),tokens=String(pv).trim().split(/\s+/),san=[];
     for(const token of tokens){
       const match=token.match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);
       if(!match)break;
