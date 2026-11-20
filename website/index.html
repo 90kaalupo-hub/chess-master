@@ -437,7 +437,7 @@ function downloadAnalysis(mode){
   if(!['quick','deep'].includes(mode)){toast('Unknown analysis type.');return}
   const pgn=currentAnalysisPGN();
   if(!pgn){toast('Load or play a game before downloading analysis.');return}
-  const cacheKey='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV14:'+mode+':'+hashAnalysisText(pgn);
   let saved=null;
   try{saved=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(error){}
   if(!saved||!Array.isArray(saved.rows)||!Array.isArray(saved.evaluations)){
