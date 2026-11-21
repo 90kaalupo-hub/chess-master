@@ -36,6 +36,22 @@
 .analysisMove:focus-visible{outline:2px solid var(--green2);outline-offset:2px}
 @media(max-width:420px){.reviewHub{padding:12px}.reviewResult{align-items:flex-start}.reviewMetrics{gap:7px}.reviewMetric{padding:9px}}
 
+
+/* Keep the complete chessboard inside narrow phone viewports. */
+@media(max-width:760px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  main,#game,.gameLayout,.gameLayout>*{min-width:0;max-width:100%}
+  #game{width:100%;overflow-x:clip}
+  .gameLayout{display:flex;flex-direction:column;align-items:stretch;width:100%;gap:12px}
+  .boardWrap{width:100%;max-width:620px;min-width:0;margin-inline:auto;padding:8px}
+  .gameBoard{width:100%;max-width:100%;min-width:0;aspect-ratio:1}
+  .gameBoard .sq{min-width:0;font-size:clamp(18px,11vw,52px)}
+  .player{min-width:0;gap:8px;flex-wrap:wrap}
+  .player>*{min-width:0}
+  .boardDecisionButtons,.side{width:100%;min-width:0}
+  .side>*{max-width:100%;min-width:0}
+}
+
 </style>
 </head>
 <body>
