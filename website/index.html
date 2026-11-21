@@ -261,9 +261,12 @@ const OPENING_BOOK_LINES=[
   'c4 e5 Nc3 Nf6 Nf3 Nc6',
   'Nf3 d5 d4 Nf6 c4 e6'
 ];
-function isOpeningBookMove(sans){
-  const prefix=sans.join(' ');
-  return !!prefix&&OPENING_BOOK_LINES.some(line=>line.startsWith(prefix));
+function isOpeningBookMove(sans,moveSan){
+  // A move is book only when the move itself extends a known opening line.
+  // Checking only the position prefix incorrectly marked off-book replies
+  // as book moves whenever the position happened to match a repertoire line.
+  const sequence=[...(sans||[]),moveSan||''].filter(Boolean).join(' ');
+  return !!sequence&&OPENING_BOOK_LINES.some(line=>line===sequence||line.startsWith(sequence+' '));
 }
 function scoreAccuracy(centipawnLosses){
   if(!centipawnLosses.length)return null;
@@ -372,7 +375,7 @@ function explainMove(row){
   if(name==='Excellent')return side+' chose a move that gave up very little expected score compared with the engine’s top line.';
   if(name==='Good')return side+' played a reasonable move, though a more accurate continuation was available.';
   if(name==='Book')return side+' followed a move in Chess Master’s built-in opening reference lines.';
-  if(name==='Miss')return side+' did not fully capitalize on the opponent’s previous mistake. The engine found a stronger opportunity.';
+  if(name==='Miss')return row.missedTactic?side+' missed a forcing tactical check. The engine’s best continuation begins with '+best+'.':side+' did not fully capitalize on the opponent’s previous mistake. The engine found a stronger opportunity.';
   if(name==='Blunder')return side+' played '+move+', causing a major expected-points drop. Look for a tactical threat, hanging piece, or king-safety problem.';
   if(name==='Mistake')return side+' played '+move+'. This gave up a substantial amount of expected points; compare the suggested continuation.';
   if(name==='Inaccuracy')return side+' played '+move+'. The move is playable, but the engine found a more precise continuation.';
@@ -437,7 +440,7 @@ function downloadAnalysis(mode){
   if(!['quick','deep'].includes(mode)){toast('Unknown analysis type.');return}
   const pgn=currentAnalysisPGN();
   if(!pgn){toast('Load or play a game before downloading analysis.');return}
-  const cacheKey='chessMasterAnalysisV14:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
   let saved=null;
   try{saved=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(error){}
   if(!saved||!Array.isArray(saved.rows)||!Array.isArray(saved.evaluations)){
@@ -490,7 +493,7 @@ async function runGameAnalysis(mode,force=false){
   const btn=document.getElementById(config.button),panel=document.getElementById(config.panel);
   const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
   const summary=document.getElementById(prefix+'Summary');
-  const cacheKey='chessMasterAnalysisV14:'+mode+':'+hashAnalysisText(pgn);
+  const cacheKey='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
   // A fresh tap on Analyse must actually start Stockfish. Do not short-circuit
   // the first review by showing an old cached result and changing the button.
   if(!force && btn.dataset.hasAnalysis==='true'){
@@ -545,21 +548,29 @@ async function runGameAnalysis(mode,force=false){
       const playedUci=played.from+played.to+(played.promotion||'');
       const exactBest=!!bestUci&&bestUci===playedUci;
       const historySans=moves.slice(0,i).map(move=>move.san);
-      const book=isOpeningBookMove(historySans);
+      const book=isOpeningBookMove(historySans,positions[i].move);
       const previousPoints=i>=2?expectedPoints(evaluations[i-2].cp,mover,ratings):beforePoints;
       const opponentBlunderGain=beforePoints-previousPoints;
-      const miss=i>=2&&opponentBlunderGain>=0.08&&expectedLoss>=0.05&&!exactBest;
+      const missAfterBlunder=i>=2&&opponentBlunderGain>=0.08&&expectedLoss>=0.05&&!exactBest;
       let legalCount=0;try{legalCount=new Chess(positions[i-1].fen).moves().length}catch(error){}
       const moverBefore=mover==='White'?before:-before,moverAfter=mover==='White'?after:-after;
       const mateThreshold=ANALYSIS_MATE_SCORE-100;
       const mateLoss=moverBefore>-mateThreshold&&moverAfter<=-mateThreshold;
       const missedMate=moverBefore>=mateThreshold&&moverAfter<mateThreshold;
       const mateDelivered=/#$/.test(played.san);
+      const bestFirstMove=(bestSan.split(/\s+/)[0]||'');
+      const bestIsForcing=/[+#]$/.test(bestFirstMove);
+      // Also flag a missed forcing check when the engine's first move is a
+      // check/mate and the played move gives up a meaningful amount. This
+      // catches tactical misses even when the opponent's prior move was not
+      // itself classified as a blunder.
+      const missedTactic=!exactBest&&bestIsForcing&&cpLoss>=100&&(cpLoss<=600||expectedLoss>=0.08||missedMate);
+      const miss=missAfterBlunder||missedTactic;
       const great=!exactBest&&cpLoss<=20&&legalCount===1;
       const sacrifice=isBrilliantSacrifice(positions[i-1].fen,positions[i].fen,evaluations[i].best,mover,cpLoss,played);
       const brilliant=sacrifice&&cpLoss<=20&&beforePoints<0.95&&afterPoints>0.35;
       const classification=classifyMove(cpLoss,{brilliant,great,miss,book,best:exactBest,mateLoss,missedMate,mateDelivered});
-      rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,evalBefore:before,evalAfter:after,expectedLoss,mateLoss,missedMate,mateDelivered,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
+      rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,evalBefore:before,evalAfter:after,expectedLoss,mateLoss,missedMate,missedTactic,mateDelivered,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
     }
     const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
     try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,ratings:{White:ratings.White,Black:ratings.Black},createdAt:new Date().toISOString()}))}catch(e){}
@@ -588,7 +599,7 @@ function getReviewRows(){
 function getReviewSaved(mode){
   const pgn=currentAnalysisPGN();
   if(!pgn)return null;
-  const key='chessMasterAnalysisV14:'+mode+':'+hashAnalysisText(pgn);
+  const key='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
   try{return JSON.parse(localStorage.getItem(key)||'null')}catch(error){return null}
 }
 function getReviewOutcome(pgn){
