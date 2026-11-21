@@ -365,26 +365,29 @@ function renderAnalysisRows(rows){
   }).join('');
 }
 function explainMove(row){
-  const name=row.classification.name,move=row.move||'',side=row.side||'The player',best=row.best||'';
-  if(row.mateLoss)return side+' allowed a forced checkmate. The engine found a move that avoided the forced mate.';
+  const name=row.classification?.name||'Move',move=row.move||'the move',side=row.side||'The player',best=row.best||'';
+  if(row.mateLoss)return side+' allowed a forced checkmate. The engine found a move that could have resisted longer or avoided mate.';
   if(row.missedMate)return side+' missed a forced checkmate opportunity.';
   if(row.mateDelivered)return side+' delivered checkmate.';
-  if(name==='Brilliant')return side+' found a sound, high-value piece sacrifice according to the current engine search. Verify the tactical line before treating it as definitive.';
-  if(name==='Great')return side+' found a critical move. It appears to be the only legal continuation in this position.';
+  if(name==='Brilliant')return side+' found a strong tactical move classified as Brilliant by the current engine search. Review the continuation to verify the idea.';
+  if(name==='Great')return side+' found a particularly strong move in an important position.';
   if(name==='Best')return side+' played the engine’s top move in this position.';
-  if(name==='Excellent')return side+' chose a move that gave up very little expected score compared with the engine’s top line.';
-  if(name==='Good')return side+' played a reasonable move, though a more accurate continuation was available.';
-  if(name==='Book')return side+' followed a move in Chess Master’s built-in opening reference lines.';
-  if(name==='Miss')return row.missedTactic?side+' missed a forcing tactical check. The engine’s best continuation begins with '+best+'.':side+' did not fully capitalize on the opponent’s previous mistake. The engine found a stronger opportunity.';
-  if(name==='Blunder')return side+' played '+move+', causing a major expected-points drop. Look for a tactical threat, hanging piece, or king-safety problem.';
-  if(name==='Mistake')return side+' played '+move+'. This gave up a substantial amount of expected points; compare the suggested continuation.';
-  if(name==='Inaccuracy')return side+' played '+move+'. The move is playable, but the engine found a more precise continuation.';
-  let detail='This move kept most of the engine evaluation. ';
+  if(name==='Excellent')return side+' chose a move that stayed close to the engine’s top continuation.';
+  if(name==='Good')return side+' played a reasonable move, although the engine preferred a more accurate continuation.';
+  if(name==='Book')return side+' played a move recognised in Chess Master’s opening reference lines.';
+  if(name==='Miss')return row.missedTactic&&best?side+' missed a forcing tactical opportunity. The engine’s suggested continuation starts with '+best+'.':side+' missed a chance to take better advantage of the position. Compare the engine’s suggested continuation.';
+  if(name==='Blunder')return side+' played '+move+', which caused a major deterioration in the engine evaluation. Check for a tactical threat, hanging piece or king-safety issue.';
+  if(name==='Mistake')return side+' played '+move+', allowing a significant improvement for the opponent. Compare the suggested continuation.';
+  if(name==='Inaccuracy')return side+' played '+move+'. The move remains playable, but the engine preferred a more precise option.';
+  let detail='The engine did not assign this move one of the main error or standout categories. ';
   if(row.promotion)detail+='The move promotes a pawn. ';
-  else if(row.castling)detail+='The move castles to improve king safety and connect the rook. ';
+  else if(row.castling)detail+='The move castles, usually improving king safety and rook activity. ';
   else if(row.captured)detail+='The move captures an opponent’s piece. ';
   else if(row.check)detail+='The move gives check. ';
-  return detail+(best?'Compare the engine continuation for another candidate.':'Engine scores are estimates at the selected analysis depth.');
+  return detail+(best?'Compare the suggested engine continuation for another candidate.':'No additional engine explanation is available for this move.');
+}
+function hasCoachMetric(value){
+  return value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
 }
 function toggleVariation(index){
   const panel=document.getElementById('variationPanel'+index);if(!panel)return;
@@ -646,8 +649,8 @@ function reviewAnalysisMove(index){
   reviewArrowUci=row.bestUci||'';
   drawReviewArrow();
   const category=row.classification?.name||'Move';
-  const loss=Number.isFinite(Number(row.loss))?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
-  const evalText=Number.isFinite(Number(row.evalBefore))&&Number.isFinite(Number(row.evalAfter))?' Evaluation (White perspective): '+(row.evalBefore/100).toFixed(2)+' → '+(row.evalAfter/100).toFixed(2)+'. ':'';
+  const loss=hasCoachMetric(row.loss)?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
+  const evalText=hasCoachMetric(row.evalBefore)&&hasCoachMetric(row.evalAfter)?' Evaluation (White perspective): '+(row.evalBefore/100).toFixed(2)+' → '+(row.evalAfter/100).toFixed(2)+'. ':'';
   const coach=category+'. '+explainMove(row)+evalText+(row.best?' Best continuation: '+row.best+'.':'')+loss;
   const label='Move '+Math.ceil(row.ply/2)+(row.side==='White'?' · White':' · Black')+' · '+category;
   document.getElementById('reviewCoachText').textContent=label+'. '+coach;
