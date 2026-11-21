@@ -68,7 +68,7 @@
 <p class="reviewNote">Move labels, accuracy and evaluations are Stockfish-backed Chess Master estimates. Local games do not change an online rating.</p>
 </section><div class="status" id="result">Game in progress</div></aside></div>
 </section>
-<section id="importPanel" class="hidden" style="margin-top:20px;background:white;border:1px solid var(--line);border-radius:16px;padding:16px"><div class="gameHead"><div><h2>Import PGN</h2><p class="sub">Paste a PGN game to load its final position and move list.</p></div><button class="secondary" onclick="hideImport()">Close</button></div><textarea id="pgnInput" class="field" placeholder='[Event "Casual Game"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><div class="actions"><button class="primary" onclick="loadPGN()">Load PGN</button><button class="secondary" onclick="document.getElementById('pgnInput').value=''">Clear</button></div><p class="muted" id="importStatus"></p></section>
+<section id="importPanel" class="hidden" style="margin-top:20px;background:white;border:1px solid var(--line);border-radius:16px;padding:16px"><div class="gameHead"><div><h2>Import PGN</h2><p class="sub">Import a Chess.com game by sharing its PGN file here, or paste PGN text. A game link alone does not contain the moves.</p></div><button class="secondary" onclick="hideImport()">Close</button></div><textarea id="pgnInput" class="field" placeholder='[Event "Casual Game"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><div class="actions"><button class="primary" onclick="loadPGN()">Load PGN</button><button class="secondary" onclick="document.getElementById('pgnInput').value=''">Clear</button></div><p class="muted" id="importStatus"></p></section>
 </main>
 <nav class="bottom"><button class="active" onclick="showHome()"><b>⌂</b>Home</button><button onclick="toast('Puzzles are coming in v0.5.')"><b>♞</b>Puzzles</button><button onclick="toast('Lessons are coming in v0.6.')"><b>▤</b>Learn</button><button onclick="toast('Watch is planned for a later update.')"><b>◎</b>Watch</button><button onclick="location.href='./THIRD-PARTY-NOTICES.html'"><b>☰</b>More</button></nav>
 <div id="toast" role="status" style="position:fixed;left:50%;bottom:85px;transform:translateX(-50%);background:#1e2a23;color:#fff;padding:11px 16px;border-radius:12px;max-width:90%;display:none;z-index:10;text-align:center"></div>
@@ -120,7 +120,98 @@ function clearGameAnalysisState(){
 }
 function newGame(){if(replayState)exitReplay();if(game&&game.history().length&&!confirm('Start a new game? The current game will be cleared.'))return;clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();ratingEligible=true;selected=null;targets=[];flipped=false;drawBoard();renderMoves()}
 async function copyPGN(){const pgn=replayState?replayState.fullPgn:(game?game.pgn({max_width:80}):'');if(!pgn){toast('No game moves are available to copy.');return}try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(pgn);toast('PGN copied.');return}}catch(e){}try{const field=document.createElement('textarea');field.value=pgn;field.setAttribute('readonly','');field.style.position='fixed';field.style.top='0';field.style.left='-9999px';field.style.opacity='0';document.body.appendChild(field);field.focus();field.select();field.setSelectionRange(0,field.value.length);const copied=document.execCommand('copy');field.remove();if(copied){toast('PGN copied.');return}}catch(e){}window.prompt('Copy your PGN:',pgn);}
-function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const candidate=new Chess();if(!candidate.load_pgn(raw)){document.getElementById('importStatus').textContent='Could not read that PGN. Please check its format.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;manualGameResult=null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded.')}
+function showChessComImportHelp(gameUrl){
+  const status=document.getElementById('importStatus');
+  status.textContent='Chess.com game link detected. Chess Master needs the PGN moves to import and analyse this game. In Chess.com, open the game, choose More → Export PGN (or Share → PGN on the web), then share the .pgn file to Chess Master. You can also paste the PGN here.';
+  if(gameUrl){
+    try{
+      const parsed=new URL(gameUrl);
+      if(parsed.protocol==='https:'&&(parsed.hostname==='chess.com'||parsed.hostname.endsWith('.chess.com'))){
+        const link=document.createElement('a');link.href=parsed.href;link.target='_blank';link.rel='noopener noreferrer';
+        link.textContent='Open this Chess.com game';link.style.display='inline-block';link.style.marginTop='6px';link.style.color='var(--green)';
+        status.appendChild(document.createElement('br'));status.appendChild(link);
+      }
+    }catch(error){}
+  }
+}
+function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const chessComLink=raw.match(/^https?:\/\/(?:www\.)?chess\.com\/game\/(?:live|daily)\/\d+(?:[^\s]*)?$/i);if(chessComLink){showChessComImportHelp(chessComLink[0]);return}const candidate=new Chess();if(!candidate.load_pgn(raw)||!candidate.history().length){document.getElementById('importStatus').textContent='Could not read that PGN or it contains no moves. Please check the file and try again.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;const importedHeaders=candidate.header()||{};manualGameResult=importedHeaders.Result==='1-0'?'White wins':importedHeaders.Result==='0-1'?'Black wins':importedHeaders.Result==='1/2-1/2'?'Draw':null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded. Starting automatic analysis…');window.setTimeout(()=>{analyseCurrentGame().catch(error=>{console.error('Imported game analysis failed',error);toast('Game imported, but automatic analysis could not start. Tap Quick Analysis to retry.')})},250)}
+
+async function readIncomingShare(){
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open('chess-master-share-inbox',1);
+    request.onupgradeneeded=()=>request.result.createObjectStore('incoming');
+    request.onsuccess=()=>{
+      const db=request.result,tx=db.transaction('incoming','readwrite'),store=tx.objectStore('incoming'),get=store.get('latest');
+      let value=null;get.onsuccess=()=>{value=get.result||null;store.delete('latest')};
+      tx.oncomplete=()=>{db.close();resolve(value)};
+      tx.onerror=()=>{db.close();reject(tx.error)};
+    };
+    request.onerror=()=>reject(request.error);
+  });
+}
+async function handleIncomingShare(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.has('shareError')){
+    showGame();showImport();
+    document.getElementById('importStatus').textContent='Chess Master could not receive that shared item. Please try sharing the PGN file again.';
+    window.history.replaceState({},document.title,window.location.pathname+window.location.hash);
+    return;
+  }
+  let sharedTitle=params.get('title')||'';
+  let sharedText=params.get('text')||'';
+  let sharedUrl=params.get('url')||'';
+  let sharedFileText='';
+  if(params.has('shared')){
+    try{
+      const incoming=await readIncomingShare();
+      if(incoming){
+        sharedTitle=incoming.title||sharedTitle;
+        sharedText=incoming.text||sharedText;
+        sharedUrl=incoming.url||sharedUrl;
+        if(incoming.pgnFile&&typeof incoming.pgnFile.text==='function')sharedFileText=await incoming.pgnFile.text();
+      }
+    }catch(error){
+      showGame();showImport();
+      document.getElementById('importStatus').textContent='The shared game was received, but Chess Master could not read it. Try sharing the PGN again.';
+    }
+  }
+  const payload=[sharedFileText,sharedUrl,sharedText,sharedTitle].filter(Boolean);
+  if(!payload.length)return;
+  const combined=payload.join('\n');
+  const pgnCandidate=payload.find(value=>/\[\s*Event\s+"/i.test(value)||/^\s*(?:\[[^\]]+\]\s*)*1\.(?:\.\.\.)?\s+/m.test(value));
+  if(pgnCandidate){
+    showGame();
+    document.getElementById('pgnInput').value=pgnCandidate;
+    showImport();
+    loadPGN();
+  }else{
+    const match=combined.match(/https?:\/\/(?:www\.)?chess\.com\/game\/(?:live|daily)\/\d+(?:[^\s]*)?/i);
+    if(match){
+      let gameUrl=match[0].replace(/[),.;]+$/,'');
+      try{
+        const parsed=new URL(gameUrl);
+        if(parsed.protocol!=='https:'||!(parsed.hostname==='chess.com'||parsed.hostname.endsWith('.chess.com')))throw new Error('Invalid Chess.com link');
+        gameUrl=parsed.href;
+        showGame();showImport();
+        const status=document.getElementById('importStatus');
+        status.textContent='Chess.com game link received. Share the PGN export from Chess.com to load the moves directly; automatic lookup from a game link is not available through the documented public API.';
+        const link=document.createElement('a');
+        link.href=gameUrl;link.target='_blank';link.rel='noopener noreferrer';
+        link.textContent='Open the shared Chess.com game';
+        link.style.display='inline-block';link.style.marginTop='6px';link.style.color='var(--green)';
+        status.appendChild(document.createElement('br'));status.appendChild(link);
+      }catch(error){
+        showGame();showImport();
+        document.getElementById('importStatus').textContent='The shared link could not be verified. Please share a public Chess.com game link.';
+      }
+    }else{
+      showGame();showImport();
+      document.getElementById('pgnInput').value=combined;
+      document.getElementById('importStatus').textContent='Shared content received. If it contains a PGN, tap Load PGN to import it.';
+    }
+  }
+  window.history.replaceState({},document.title,window.location.pathname+window.location.hash);
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.display='none',2600)}
 function updateSoundButton(){const b=document.getElementById('soundToggle'),slider=document.getElementById('soundVolume'),value=document.getElementById('soundVolumeValue');if(b){b.textContent=soundEnabled?'Sound: On':'Sound: Off';b.setAttribute('aria-pressed',String(soundEnabled))}if(slider)slider.value=String(soundVolume);if(value)value.textContent=soundVolume+'%'}
 let soundVolume=Number(localStorage.getItem('chessMasterSoundVolume')||65);if(!Number.isFinite(soundVolume))soundVolume=65;soundVolume=Math.max(0,Math.min(100,soundVolume));
@@ -145,7 +236,7 @@ function resignGame(){if(replayState||manualGameResult||!game||game.game_over())
 
 function getSavedGames(){try{return JSON.parse(localStorage.getItem('chessMasterGames')||'[]')}catch(e){return[]}}
 function persistSavedGames(games){localStorage.setItem('chessMasterGames',JSON.stringify(games))}
-function saveCurrentGame(){if(!game||replayState||(!game.history().length&&!manualGameResult))return;applyCompletedGameRatings();try{const games=getSavedGames();const existing=games.find(g=>g.id===currentGameId);const item={id:currentGameId,pgn:game.pgn(),date:new Date().toISOString(),moves:game.history().length,result:manualGameResult|| (game.in_checkmate()?(game.turn()==='w'?'Black wins':'White wins'):game.in_stalemate()?'Draw by stalemate':game.in_threefold_repetition()?'Draw by repetition':game.insufficient_material()?'Draw — insufficient material':game.in_draw()?'Draw':'In progress'),keepForever:!!(existing&&existing.keepForever)};const at=games.findIndex(g=>g.id===currentGameId);if(at>=0)games[at]=item;else games.unshift(item);const pinned=games.filter(g=>g.keepForever),recent=games.filter(g=>!g.keepForever).slice(0,30);persistSavedGames([...pinned,...recent]);renderSavedGames()}catch(e){toast('Could not save game on this device. Check browser storage settings.')}}
+function saveCurrentGame(){if(!game||replayState||(!game.history().length&&!manualGameResult))return;applyCompletedGameRatings();try{const games=getSavedGames();const existing=games.find(g=>g.id===currentGameId);const item={id:currentGameId,pgn:game.pgn(),headers:game.header?game.header():{},imported:!ratingEligible,date:new Date().toISOString(),moves:game.history().length,result:manualGameResult|| (game.in_checkmate()?(game.turn()==='w'?'Black wins':'White wins'):game.in_stalemate()?'Draw by stalemate':game.in_threefold_repetition()?'Draw by repetition':game.insufficient_material()?'Draw — insufficient material':game.in_draw()?'Draw':'In progress'),keepForever:!!(existing&&existing.keepForever)};const at=games.findIndex(g=>g.id===currentGameId);if(at>=0)games[at]=item;else games.unshift(item);const pinned=games.filter(g=>g.keepForever),recent=games.filter(g=>!g.keepForever).slice(0,30);persistSavedGames([...pinned,...recent]);renderSavedGames()}catch(e){toast('Could not save game on this device. Check browser storage settings.')}}
 function renderSavedGames(){const el=document.getElementById('savedGames');if(!el)return;const games=getSavedGames();if(!games.length){el.innerHTML='<p class="muted">No saved games yet. Play a few moves and your game will be saved automatically.</p>';return}el.innerHTML='';games.forEach((g,i)=>{const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap';const info=document.createElement('div');info.style.flex='1 1 150px';const strong=document.createElement('strong');strong.textContent=(g.keepForever?'★ ':'')+(g.result||'Saved game');const small=document.createElement('div');small.className='muted';small.textContent=(g.moves||0)+' plies · '+new Date(g.date).toLocaleString()+(g.keepForever?' · Kept forever':'');info.append(strong,small);const actions=document.createElement('div');actions.style.cssText='display:flex;gap:6px;flex-wrap:wrap';const review=document.createElement('button');review.className='secondary';review.textContent='Review';review.onclick=()=>openSavedGame(i);const keep=document.createElement('button');keep.className='secondary';keep.textContent=g.keepForever?'Unkeep':'Keep forever';keep.setAttribute('aria-pressed',String(!!g.keepForever));keep.onclick=()=>toggleSavedGameForever(g.id);const remove=document.createElement('button');remove.className='secondary';remove.textContent='Delete';remove.onclick=()=>deleteSavedGame(g.id);actions.append(review,keep,remove);row.append(info,actions);el.append(row)})}
 function toggleSavedGameForever(id){const games=getSavedGames(),item=games.find(g=>g.id===id);if(!item)return;item.keepForever=!item.keepForever;const pinned=games.filter(g=>g.keepForever),recent=games.filter(g=>!g.keepForever).slice(0,30);try{persistSavedGames([...pinned,...recent]);renderSavedGames();toast(item.keepForever?'Game saved permanently on this device.':'Game returned to recent history.')}catch(e){toast('Could not update this saved game.')}}
 function deleteSavedGame(id){const games=getSavedGames(),item=games.find(g=>g.id===id);if(!item)return;const label=item.keepForever?'kept/favourite game':'game';if(!confirm('Delete this '+label+' from your history? You do not need to unkeep it first. This cannot be undone.'))return;try{persistSavedGames(games.filter(g=>g.id!==id));renderSavedGames();toast('Game deleted from history.')}catch(e){toast('Could not delete this game.')}}
@@ -780,5 +871,6 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 
 loadAnalysisRatings();
 init();
+handleIncomingShare();
 </script>
 </body></html>
