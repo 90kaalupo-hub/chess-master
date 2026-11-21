@@ -1,4 +1,4 @@
-const CACHE='chess-master-v03-share-target-72';
+const CACHE='chess-master-v03-link-import-73';
 const SHARE_DB='chess-master-share-inbox';
 function openShareDb(){
   return new Promise((resolve,reject)=>{
