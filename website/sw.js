@@ -1,4 +1,4 @@
-const CACHE='chess-master-v03-android-board-grid-76';
+const CACHE='chess-master-v03-android-capture-refresh-77';
 const SHARE_DB='chess-master-share-inbox';
 function openShareDb(){
   return new Promise((resolve,reject)=>{
@@ -26,30 +26,27 @@ self.addEventListener('fetch',event=>{
     const shareUrl=new URL(request.url);
     if(shareUrl.origin===self.location.origin&&shareUrl.pathname.startsWith(new URL(self.registration.scope).pathname)){
       event.respondWith((async()=>{
-        try{
-          const form=await request.formData();
-          const file=form.get('pgn');
-          await saveIncomingShare({
-            title:String(form.get('title')||''),text:String(form.get('text')||''),url:String(form.get('url')||''),
-            pgnFile:file&&typeof file!=='string'?file:null,receivedAt:Date.now()
-          });
-          return Response.redirect(new URL('./?shared=1',self.registration.scope).href,303);
-        }catch(error){
-          return Response.redirect(new URL('./?shareError=1',self.registration.scope).href,303);
+        const form=await request.formData();
+        const payload={text:form.get('text')||'',files:[]};
+        for(const [key,value] of form.entries()){
+          if(value instanceof File&&value.size){
+            payload.files.push({name:value.name,type:value.type,text:await value.text()});
+          }
         }
+        await saveIncomingShare(payload);
+        return Response.redirect(new URL('./?shared=1',self.registration.scope),303);
       })());
     }
     return;
   }
   if(request.method!=='GET')return;
   const url=new URL(request.url);
-  if(url.origin===self.location.origin){
-    if(request.mode==='navigate'){
-      event.respondWith(fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy));}return response;}).catch(()=>caches.match(request).then(cached=>cached||caches.match('./index.html')).then(cached=>cached||caches.match('./offline.html'))));
-    }else{
-      event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy));}return response;}).catch(()=>caches.match('./offline.html'))));
+  if(url.origin!==self.location.origin)return;
+  event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{
+    if(response.ok&&response.type==='basic'){
+      const copy=response.clone();
+      caches.open(CACHE).then(cache=>cache.put(request,copy));
     }
-  }else if((url.hostname==='cdnjs.cloudflare.com'&&url.pathname.includes('/chess.js/'))){
-    event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok||response.type==='opaque'){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy));}return response;})));
-  }
+    return response;
+  }).catch(()=>caches.match('./offline.html'))));
 });
