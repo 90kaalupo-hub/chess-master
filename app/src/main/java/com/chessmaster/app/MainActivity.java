@@ -117,7 +117,6 @@ public class MainActivity extends Activity {
 
         if (shared.length() > 0) {
             pendingSharedContent = shared.toString();
-            pageLoaded = false;
         }
     }
 
@@ -147,12 +146,12 @@ public class MainActivity extends Activity {
         String script = "(function(value) {" +
                 "if (typeof showHome !== 'function' || typeof showImport !== 'function') return;" +
                 "showHome(); showImport();" +
-                "var pgn = /\\[\\s*Event\\s+\"/i.test(value) || /^\\s*(?:\\[[^\\]]+\\]\\s*)*1\\.(?:\\.\\.)?\\s+/m.test(value);" +
+                "var pgn = /\\\\[\\\\s*Event\\\\s+\"/i.test(value) || /^\\\\s*(?:\\\\[[^\\\\]]+\\\\]\\\\s*)*1\\\\.(?:\\\\.\\\\.)?\\\\s+/m.test(value);" +
                 "if (pgn) {" +
                 "var field = document.getElementById('pgnInput'); if (field) field.value = value;" +
                 "if (typeof loadPGN === 'function') loadPGN();" +
                 "} else {" +
-                "var match = value.match(/https?:\\/\\/(?:www\\.)?chess\\.com\\/game\\/(?:live|daily)\\/\\d+(?:[^\\s]*)?/i);" +
+                "var match = value.match(/https?:\\\\/\\\\/(?:www\\\\.)?chess\\\\.com\\\\/game\\\\/(?:live|daily)\\\\/\\\\d+(?:[^\\\\s]*)?/i);" +
                 "if (match) {" +
                 "var link = document.getElementById('chessComLinkInput'); if (link) link.value = match[0].replace(/[),.;]+$/, '');" +
                 "if (typeof importChessComLink === 'function') importChessComLink();" +
