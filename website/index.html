@@ -122,13 +122,47 @@ function newGame(){if(replayState)exitReplay();if(game&&game.history().length&&!
 async function copyPGN(){const pgn=replayState?replayState.fullPgn:(game?game.pgn({max_width:80}):'');if(!pgn){toast('No game moves are available to copy.');return}try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(pgn);toast('PGN copied.');return}}catch(e){}try{const field=document.createElement('textarea');field.value=pgn;field.setAttribute('readonly','');field.style.position='fixed';field.style.top='0';field.style.left='-9999px';field.style.opacity='0';document.body.appendChild(field);field.focus();field.select();field.setSelectionRange(0,field.value.length);const copied=document.execCommand('copy');field.remove();if(copied){toast('PGN copied.');return}}catch(e){}window.prompt('Copy your PGN:',pgn);}
 function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const candidate=new Chess();if(!candidate.load_pgn(raw)){document.getElementById('importStatus').textContent='Could not read that PGN. Please check its format.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;manualGameResult=null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded.')}
 
-function handleIncomingShare(){
+async function readIncomingShare(){
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open('chess-master-share-inbox',1);
+    request.onupgradeneeded=()=>request.result.createObjectStore('incoming');
+    request.onsuccess=()=>{
+      const db=request.result,tx=db.transaction('incoming','readwrite'),store=tx.objectStore('incoming'),get=store.get('latest');
+      let value=null;get.onsuccess=()=>{value=get.result||null;store.delete('latest')};
+      tx.oncomplete=()=>{db.close();resolve(value)};
+      tx.onerror=()=>{db.close();reject(tx.error)};
+    };
+    request.onerror=()=>reject(request.error);
+  });
+}
+async function handleIncomingShare(){
   const params=new URLSearchParams(window.location.search);
-  const sharedTitle=params.get('title')||'';
-  const sharedText=params.get('text')||'';
-  const sharedUrl=params.get('url')||'';
-  if(!sharedTitle&&!sharedText&&!sharedUrl)return;
-  const payload=[sharedUrl,sharedText,sharedTitle].filter(Boolean);
+  if(params.has('shareError')){
+    showGame();showImport();
+    document.getElementById('importStatus').textContent='Chess Master could not receive that shared item. Please try sharing the PGN file again.';
+    window.history.replaceState({},document.title,window.location.pathname+window.location.hash);
+    return;
+  }
+  let sharedTitle=params.get('title')||'';
+  let sharedText=params.get('text')||'';
+  let sharedUrl=params.get('url')||'';
+  let sharedFileText='';
+  if(params.has('shared')){
+    try{
+      const incoming=await readIncomingShare();
+      if(incoming){
+        sharedTitle=incoming.title||sharedTitle;
+        sharedText=incoming.text||sharedText;
+        sharedUrl=incoming.url||sharedUrl;
+        if(incoming.pgnFile&&typeof incoming.pgnFile.text==='function')sharedFileText=await incoming.pgnFile.text();
+      }
+    }catch(error){
+      showGame();showImport();
+      document.getElementById('importStatus').textContent='The shared game was received, but Chess Master could not read it. Try sharing the PGN again.';
+    }
+  }
+  const payload=[sharedFileText,sharedUrl,sharedText,sharedTitle].filter(Boolean);
+  if(!payload.length)return;
   const combined=payload.join('\n');
   const pgnCandidate=payload.find(value=>/\[\s*Event\s+"/i.test(value)||/^\s*(?:\[[^\]]+\]\s*)*1\.(?:\.\.\.)?\s+/m.test(value));
   if(pgnCandidate){
@@ -144,10 +178,9 @@ function handleIncomingShare(){
         const parsed=new URL(gameUrl);
         if(parsed.protocol!=='https:'||!(parsed.hostname==='chess.com'||parsed.hostname.endsWith('.chess.com')))throw new Error('Invalid Chess.com link');
         gameUrl=parsed.href;
-        showGame();
-        showImport();
+        showGame();showImport();
         const status=document.getElementById('importStatus');
-        status.textContent='Chess.com game link received successfully. Automatic link-to-PGN retrieval is the next v0.3 step. For now, sharing a PGN from Chess.com will import it directly.';
+        status.textContent='Chess.com game link received. Share the PGN export from Chess.com to load the moves directly; automatic lookup from a game link is not available through the documented public API.';
         const link=document.createElement('a');
         link.href=gameUrl;link.target='_blank';link.rel='noopener noreferrer';
         link.textContent='Open the shared Chess.com game';
