@@ -121,6 +121,50 @@ function clearGameAnalysisState(){
 function newGame(){if(replayState)exitReplay();if(game&&game.history().length&&!confirm('Start a new game? The current game will be cleared.'))return;clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();ratingEligible=true;selected=null;targets=[];flipped=false;drawBoard();renderMoves()}
 async function copyPGN(){const pgn=replayState?replayState.fullPgn:(game?game.pgn({max_width:80}):'');if(!pgn){toast('No game moves are available to copy.');return}try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(pgn);toast('PGN copied.');return}}catch(e){}try{const field=document.createElement('textarea');field.value=pgn;field.setAttribute('readonly','');field.style.position='fixed';field.style.top='0';field.style.left='-9999px';field.style.opacity='0';document.body.appendChild(field);field.focus();field.select();field.setSelectionRange(0,field.value.length);const copied=document.execCommand('copy');field.remove();if(copied){toast('PGN copied.');return}}catch(e){}window.prompt('Copy your PGN:',pgn);}
 function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const candidate=new Chess();if(!candidate.load_pgn(raw)){document.getElementById('importStatus').textContent='Could not read that PGN. Please check its format.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;manualGameResult=null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded.')}
+
+function handleIncomingShare(){
+  const params=new URLSearchParams(window.location.search);
+  const sharedTitle=params.get('title')||'';
+  const sharedText=params.get('text')||'';
+  const sharedUrl=params.get('url')||'';
+  if(!sharedTitle&&!sharedText&&!sharedUrl)return;
+  const payload=[sharedUrl,sharedText,sharedTitle].filter(Boolean);
+  const combined=payload.join('\n');
+  const pgnCandidate=payload.find(value=>/\[\s*Event\s+"/i.test(value)||/^\s*(?:\[[^\]]+\]\s*)*1\.(?:\.\.\.)?\s+/m.test(value));
+  if(pgnCandidate){
+    showGame();
+    document.getElementById('pgnInput').value=pgnCandidate;
+    showImport();
+    loadPGN();
+  }else{
+    const match=combined.match(/https?:\/\/(?:www\.)?chess\.com\/game\/(?:live|daily)\/\d+(?:[^\s]*)?/i);
+    if(match){
+      let gameUrl=match[0].replace(/[),.;]+$/,'');
+      try{
+        const parsed=new URL(gameUrl);
+        if(parsed.protocol!=='https:'||!(parsed.hostname==='chess.com'||parsed.hostname.endsWith('.chess.com')))throw new Error('Invalid Chess.com link');
+        gameUrl=parsed.href;
+        showGame();
+        showImport();
+        const status=document.getElementById('importStatus');
+        status.textContent='Chess.com game link received successfully. Automatic link-to-PGN retrieval is the next v0.3 step. For now, sharing a PGN from Chess.com will import it directly.';
+        const link=document.createElement('a');
+        link.href=gameUrl;link.target='_blank';link.rel='noopener noreferrer';
+        link.textContent='Open the shared Chess.com game';
+        link.style.display='inline-block';link.style.marginTop='6px';link.style.color='var(--green)';
+        status.appendChild(document.createElement('br'));status.appendChild(link);
+      }catch(error){
+        showGame();showImport();
+        document.getElementById('importStatus').textContent='The shared link could not be verified. Please share a public Chess.com game link.';
+      }
+    }else{
+      showGame();showImport();
+      document.getElementById('pgnInput').value=combined;
+      document.getElementById('importStatus').textContent='Shared content received. If it contains a PGN, tap Load PGN to import it.';
+    }
+  }
+  window.history.replaceState({},document.title,window.location.pathname+window.location.hash);
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.display='none',2600)}
 function updateSoundButton(){const b=document.getElementById('soundToggle'),slider=document.getElementById('soundVolume'),value=document.getElementById('soundVolumeValue');if(b){b.textContent=soundEnabled?'Sound: On':'Sound: Off';b.setAttribute('aria-pressed',String(soundEnabled))}if(slider)slider.value=String(soundVolume);if(value)value.textContent=soundVolume+'%'}
 let soundVolume=Number(localStorage.getItem('chessMasterSoundVolume')||65);if(!Number.isFinite(soundVolume))soundVolume=65;soundVolume=Math.max(0,Math.min(100,soundVolume));
@@ -780,5 +824,6 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 
 loadAnalysisRatings();
 init();
+handleIncomingShare();
 </script>
 </body></html>
