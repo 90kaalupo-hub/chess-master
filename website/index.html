@@ -652,14 +652,20 @@ function getReviewSaved(mode){
   const key='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
   try{return JSON.parse(localStorage.getItem(key)||'null')}catch(error){return null}
 }
-function restoreCachedCoachReview(){
-  if(getReviewRows().length)return;
-  for(const mode of ['quick','deep']){
+function getPreferredReviewMode(){
+  // Deep Analysis always takes priority when both result sets exist.
+  for(const mode of ['deep','quick']){
     const saved=getReviewSaved(mode);
     if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
-      analysisRowsByMode[mode]=saved.rows;activeReviewMode=mode;renderPostGameReview(mode);return;
+      analysisRowsByMode[mode]=saved.rows;
+      return mode;
     }
   }
+  return null;
+}
+function restoreCachedCoachReview(){
+  const mode=getPreferredReviewMode();
+  if(mode){activeReviewMode=mode;renderPostGameReview(mode);}
 }
 function getReviewOutcome(pgn){
   const candidate=new Chess();
@@ -673,7 +679,11 @@ function getReviewOutcome(pgn){
   return {title:'Game complete',note:'No rated online result is recorded for this local game.'};
 }
 function renderPostGameReview(mode){
-  activeReviewRowIndex=-1;activeReviewMode=mode;const saved=getReviewSaved(mode);
+  activeReviewRowIndex=-1;
+  // Show Deep Analysis coach/metrics whenever deep results exist, even if
+  // Quick Analysis was also run or completed more recently.
+  mode=getPreferredReviewMode()||mode;
+  activeReviewMode=mode;const saved=getReviewSaved(mode);
   if(!saved||!Array.isArray(saved.rows))return;
   const hub=document.getElementById('gameReviewHub');
   if(!hub)return;
