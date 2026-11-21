@@ -146,14 +146,16 @@ public class MainActivity extends Activity {
         String script = "(function(value) {" +
                 "if (typeof showHome !== 'function' || typeof showImport !== 'function') return;" +
                 "showHome(); showImport();" +
-                "var pgn = /\\\\[\\\\s*Event\\\\s+\"/i.test(value) || /^\\\\s*(?:\\\\[[^\\\\]]+\\\\]\\\\s*)*1\\\\.(?:\\\\.\\\\.)?\\\\s+/m.test(value);" +
+                "var trimmed = value.trim();" +
+                "var pgn = trimmed.indexOf('[Event \\\"') === 0 || trimmed.indexOf('[Site \\\"') === 0 || trimmed.indexOf('[Date \\\"') === 0 || trimmed.indexOf('1.') === 0;" +
                 "if (pgn) {" +
-                "var field = document.getElementById('pgnInput'); if (field) field.value = value;" +
+                "var field = document.getElementById('pgnInput'); if (field) field.value = trimmed;" +
                 "if (typeof loadPGN === 'function') loadPGN();" +
                 "} else {" +
-                "var match = value.match(/https?:\\\\/\\\\/(?:www\\\\.)?chess\\\\.com\\\\/game\\\\/(?:live|daily)\\\\/\\\\d+(?:[^\\\\s]*)?/i);" +
-                "if (match) {" +
-                "var link = document.getElementById('chessComLinkInput'); if (link) link.value = match[0].replace(/[),.;]+$/, '');" +
+                "var parts = value.split(' ');" +
+                "var linkText = parts.filter(function(part) { return part.indexOf('https://') === 0 && part.indexOf('chess.com/game/') >= 0; })[0];" +
+                "if (linkText) {" +
+                "var link = document.getElementById('chessComLinkInput'); if (link) link.value = linkText.replace(/[),.;]+$/, '');" +
                 "if (typeof importChessComLink === 'function') importChessComLink();" +
                 "} else {" +
                 "var status = document.getElementById('importStatus'); if (status) status.textContent = 'Shared content received. Share a PGN export or paste PGN moves to import the game.';" +
