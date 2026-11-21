@@ -274,7 +274,7 @@ function applyCompletedGameRatings(){
 function expectedPoints(cpWhite,side,ratings){
   const playerCp=side==='White'?cpWhite:-cpWhite;
   const opponent=side==='White'?'Black':'White';
-  const ratingEdge=(ratings[side]||1200)-(ratings[opponent]||1200);
+  const ratingEdge=(ratings[side]||100)-(ratings[opponent]||100);
   // Independent Elo-style conversion from engine advantage to expected
   // score. The exact CAPS2 conversion is not public.
   const effective=(Math.max(-1200,Math.min(1200,playerCp))*1.25)+ratingEdge;
