@@ -1,4 +1,4 @@
-const CACHE='chess-master-v03-mobile-board-75';
+const CACHE='chess-master-v03-android-board-grid-76';
 const SHARE_DB='chess-master-share-inbox';
 function openShareDb(){
   return new Promise((resolve,reject)=>{
