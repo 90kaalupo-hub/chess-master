@@ -57,13 +57,13 @@
 <div class="gameHead"><div><div class="eyebrow">Local game</div><h1 style="font-size:28px">Play chess</h1><p class="sub" id="gameStatus">White to move</p></div><button class="secondary" onclick="showHome()">← Home</button></div>
 <div class="gameLayout"><div class="boardWrap"><div class="player"><strong>♚ Black</strong><strong id="blackLabel">Ready</strong></div><div class="gameBoard" id="board" role="grid" aria-label="Interactive chessboard"></div><div class="player"><strong>♔ White</strong><strong id="whiteLabel" class="turn">To move</strong></div></div>
 <div class="gameDecisionButtons boardDecisionButtons" aria-label="Game result actions"><button class="primary" id="offerDrawBtn" onclick="offerDraw()">½ Offer draw</button><button class="secondary resignAction" id="resignBtn" onclick="resignGame()">⚑ Resign</button></div>
-<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="soundControls"><div><strong>♬ Chess sound effects</strong><div class="soundVolume"><label for="soundVolume">Volume</label><input id="soundVolume" type="range" min="0" max="100" step="5" value="65" oninput="setSoundVolume(this.value)"><span id="soundVolumeValue">65%</span></div></div><button id="soundToggle" type="button" onclick="toggleSound()">Sound: On</button></div><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()" disabled>▶ Play</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><div class="analysisRatingControls"><span class="analysisRatingTitle">Player ratings for expected-points estimates</span><label>White <input id="analysisWhiteRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><label>Black <input id="analysisBlackRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><span class="analysisRatingHint">Set approximate ratings · default 1200 each</span></div><button class="primary" id="analyseGameBtn" style="width:100%;margin-top:9px" onclick="analyseCurrentGame()">♟ Quick Analysis</button><button class="secondary" id="deepAnalyseBtn" style="width:100%;margin-top:8px" onclick="analyseCurrentGameDeep()">♟ Deep Analysis</button><section id="analysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Quick Analysis</h2><div class="analysisExportHead"><span id="analysisStatus" class="muted">Ready</span><button type="button" class="secondary analysisExportButton" id="exportQuickAnalysisBtn" onclick="downloadAnalysis('quick')" disabled>↓ Download</button></div></div><p class="muted">Fast overview · shorter engine thinking time.</p><div class="analysisSummary" id="analysisSummary"></div><div class="analysisGraph" id="analysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="analysisProgressBar"></div></div><div id="analysisResults" class="analysisResults"><p class="muted">Run Quick Analysis to see move feedback.</p></div></section><section id="deepAnalysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Deep Analysis</h2><div class="analysisExportHead"><span id="deepAnalysisStatus" class="muted">Ready</span><button type="button" class="secondary analysisExportButton" id="exportDeepAnalysisBtn" onclick="downloadAnalysis('deep')" disabled>↓ Download</button></div></div><p class="muted">More engine thinking per position for a closer review. This takes longer, especially for long games.</p><div class="analysisSummary" id="deepAnalysisSummary"></div><div class="analysisGraph" id="deepAnalysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run deep analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="deepAnalysisProgressBar"></div></div><div id="deepAnalysisResults" class="analysisResults"><p class="muted">Run Deep Analysis separately when you want a more detailed review.</p></div></section><section id="gameReviewHub" class="reviewHub" hidden aria-live="polite">
+<aside class="side"><h2>Game controls</h2><p class="muted">Pass the device between players after each move.</p><div class="soundControls"><div><strong>♬ Chess sound effects</strong><div class="soundVolume"><label for="soundVolume">Volume</label><input id="soundVolume" type="range" min="0" max="100" step="5" value="65" oninput="setSoundVolume(this.value)"><span id="soundVolumeValue">65%</span></div></div><button id="soundToggle" type="button" onclick="toggleSound()">Sound: On</button></div><div class="gameButtons"><button class="secondary" onclick="undoMove()">↶ Undo</button><button class="secondary" onclick="flipBoard()">⇅ Flip</button><button class="secondary" onclick="newGame()">＋ New game</button></div><div class="sectionHead"><h2>Game replay</h2><span class="muted" id="replayCount">Live game</span></div><div class="replayTools" aria-label="Replay controls"><button class="secondary" onclick="replayStep(-999)" title="First position">|◀ First</button><button class="secondary" onclick="replayStep(-1)" title="Previous move">◀ Back</button><button class="primary" id="replayPlay" onclick="toggleReplayPlay()">♟ Coach Review</button><button class="secondary" onclick="replayStep(1)" title="Next move">Next ▶</button><button class="secondary" onclick="replayStep(999)" title="Final position">Last ▶|</button></div><div class="replayMeta"><label class="muted" for="replaySpeed">Playback speed</label><select id="replaySpeed" onchange="changeReplaySpeed()"><option value="1800">0.5× Slow</option><option value="1000" selected>1× Normal</option><option value="500">2× Fast</option></select></div><div id="replayTimeline" class="timeline" aria-label="Move timeline"><span class="muted">Start a replay to see moves.</span></div><button class="secondary" id="exitReplay" style="width:100%" onclick="exitReplay()" disabled>Exit replay · Return to live game</button><div class="sectionHead"><h2>Moves</h2><button class="textLink" onclick="copyPGN()">Copy PGN</button></div><div id="moves" class="moveList" aria-live="polite"></div><button class="secondary" style="width:100%" onclick="showImport()">Import PGN</button><div class="analysisRatingControls"><span class="analysisRatingTitle">Player ratings for expected-points estimates</span><label>White <input id="analysisWhiteRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><label>Black <input id="analysisBlackRating" type="number" min="400" max="3000" step="50" value="1200" onchange="saveAnalysisRatings()"></label><span class="analysisRatingHint">Set approximate ratings · default 1200 each</span></div><button class="primary" id="analyseGameBtn" style="width:100%;margin-top:9px" onclick="analyseCurrentGame()">♟ Quick Analysis</button><button class="secondary" id="deepAnalyseBtn" style="width:100%;margin-top:8px" onclick="analyseCurrentGameDeep()">♟ Deep Analysis</button><section id="analysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Quick Analysis</h2><div class="analysisExportHead"><span id="analysisStatus" class="muted">Ready</span><button type="button" class="secondary analysisExportButton" id="exportQuickAnalysisBtn" onclick="downloadAnalysis('quick')" disabled>↓ Download</button></div></div><p class="muted">Fast overview · shorter engine thinking time.</p><div class="analysisSummary" id="analysisSummary"></div><div class="analysisGraph" id="analysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="analysisProgressBar"></div></div><div id="analysisResults" class="analysisResults"><p class="muted">Run Quick Analysis to see move feedback.</p></div></section><section id="deepAnalysisPanel" class="analysisPanel hidden"><div class="sectionHead"><h2>Deep Analysis</h2><div class="analysisExportHead"><span id="deepAnalysisStatus" class="muted">Ready</span><button type="button" class="secondary analysisExportButton" id="exportDeepAnalysisBtn" onclick="downloadAnalysis('deep')" disabled>↓ Download</button></div></div><p class="muted">More engine thinking per position for a closer review. This takes longer, especially for long games.</p><div class="analysisSummary" id="deepAnalysisSummary"></div><div class="analysisGraph" id="deepAnalysisGraph"><div class="analysisGraphHead"><span>Evaluation trend</span><span>White ↔ Black</span></div><p class="muted">Run deep analysis to build the evaluation graph.</p></div><div class="analysisProgress"><div id="deepAnalysisProgressBar"></div></div><div id="deepAnalysisResults" class="analysisResults"><p class="muted">Run Deep Analysis separately when you want a more detailed review.</p></div></section><section id="gameReviewHub" class="reviewHub" hidden aria-live="polite">
 <div class="sectionHead" style="margin:0 0 10px"><div><div class="eyebrow">Your game, understood</div><h2>Game Review</h2></div><span class="pill" id="reviewMoveCount">Analysis ready</span></div>
 <div class="reviewResult"><div><span class="muted" style="font-size:11px;font-weight:750;text-transform:uppercase">Game result</span><strong id="reviewOutcome">Game reviewed</strong><span class="muted" id="reviewOutcomeNote">Local game · no online rating change</span></div><span style="font-size:32px" aria-hidden="true">♟</span></div>
 <div class="reviewMetrics"><div class="reviewMetric"><span>WHITE ACCURACY · EST.</span><strong id="reviewWhiteAccuracy">—</strong></div><div class="reviewMetric"><span>BLACK ACCURACY · EST.</span><strong id="reviewBlackAccuracy">—</strong></div></div>
 <div class="reviewMetrics"><div class="reviewMetric"><span>BEST / BRILLIANT MOVES</span><strong id="reviewBestMoves">—</strong></div><div class="reviewMetric"><span>MISTAKES / BLUNDERS</span><strong id="reviewErrors">—</strong></div></div>
 <div class="reviewCoach"><small>Chess Master coach</small><p id="reviewCoachText">Select a move below to understand what happened and what could be improved.</p></div>
-<div class="reviewNav"><button class="secondary" id="reviewPrevious" type="button" onclick="stepReviewMove(-1)" disabled>← Previous move</button><button class="primary" id="reviewPlay" type="button" onclick="toggleReviewPlay()" disabled>▶ Play review</button><button class="secondary" id="reviewNext" type="button" onclick="stepReviewMove(1)" disabled>Next move →</button></div>
+<div class="reviewNav"><button class="secondary" id="reviewPrevious" type="button" onclick="stepReviewMove(-1)" disabled>← Previous move</button><button class="secondary" id="reviewNext" type="button" onclick="stepReviewMove(1)" disabled>Next move →</button></div>
 <p class="reviewNote">Move labels, accuracy and evaluations are Stockfish-backed Chess Master estimates. Local games do not change an online rating.</p>
 </section><div class="status" id="result">Game in progress</div></aside></div>
 </section>
@@ -97,13 +97,13 @@ function renderMoves(){if(!game)return;const list=game.history();let html='';for
 function undoMove(){if(replayState){toast('Exit replay to edit the live game.');return}if(manualGameResult){toast('This game has ended. Start a new game to continue.');return}if(!game||!game.undo()){toast('There are no moves to undo.');return}selected=null;targets=[];saveCurrentGame();drawBoard();renderMoves()}
 function flipBoard(){flipped=!flipped;drawBoard();if(activeReviewRowIndex>=0)drawReviewArrow()}
 function clearGameAnalysisState(){
-  stopReviewPlay();
+  stopReplayPlay();
   activeReviewRowIndex=-1;activeReviewMode='quick';reviewArrowUci='';
   analysisRowsState=[];analysisRowsByMode={quick:[],deep:[]};selectedAnalysisCategory=null;
   const hub=document.getElementById('gameReviewHub');if(hub)hub.hidden=true;
   const coach=document.getElementById('reviewCoachText');if(coach)coach.textContent='Select a move below to understand what happened and what could be improved.';
   ['reviewOutcome','reviewOutcomeNote','reviewMoveCount','reviewWhiteAccuracy','reviewBlackAccuracy','reviewBestMoves','reviewErrors'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=id==='reviewOutcome'?'Game reviewed':id==='reviewOutcomeNote'?'Local game · no online rating change':'—'});
-  ['reviewPrevious','reviewNext','reviewPlay'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=true});
+  ['reviewPrevious','reviewNext'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=true});
   const arrow=document.querySelector('#board .reviewArrowLayer');if(arrow)arrow.remove();
   const panels=[['quick','analysisPanel','analysisResults','analysisSummary','analysisGraph','analysisProgressBar','analysisStatus','analyseGameBtn','exportQuickAnalysisBtn'],['deep','deepAnalysisPanel','deepAnalysisResults','deepAnalysisSummary','deepAnalysisGraph','deepAnalysisProgressBar','deepAnalysisStatus','deepAnalyseBtn','exportDeepAnalysisBtn']];
   panels.forEach(([mode,panelId,resultsId,summaryId,graphId,progressId,statusId,buttonId,exportId])=>{
@@ -146,16 +146,16 @@ function getSavedGames(){try{return JSON.parse(localStorage.getItem('chessMaster
 function saveCurrentGame(){if(!game||replayState||(!game.history().length&&!manualGameResult))return;try{const games=getSavedGames();const item={id:currentGameId,pgn:game.pgn(),date:new Date().toISOString(),moves:game.history().length,result:manualGameResult|| (game.in_checkmate()?(game.turn()==='w'?'Black wins':'White wins'):game.in_stalemate()?'Draw by stalemate':game.in_threefold_repetition()?'Draw by repetition':game.insufficient_material()?'Draw — insufficient material':game.in_draw()?'Draw':'In progress')};const at=games.findIndex(g=>g.id===currentGameId);if(at>=0)games[at]=item;else games.unshift(item);localStorage.setItem('chessMasterGames',JSON.stringify(games.slice(0,30)));renderSavedGames()}catch(e){toast('Could not save game on this device. Check browser storage settings.')}}
 function renderSavedGames(){const el=document.getElementById('savedGames');if(!el)return;const games=getSavedGames();if(!games.length){el.innerHTML='<p class="muted">No saved games yet. Play a few moves and your game will be saved automatically.</p>';return}el.innerHTML='';games.forEach((g,i)=>{const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)';const info=document.createElement('div');const strong=document.createElement('strong');strong.textContent=g.result||'Saved game';const small=document.createElement('div');small.className='muted';small.textContent=(g.moves||0)+' plies · '+new Date(g.date).toLocaleString();info.append(strong,small);const btn=document.createElement('button');btn.className='secondary';btn.textContent='Review';btn.onclick=()=>openSavedGame(i);row.append(info,btn);el.append(row)})}
 function openSavedGame(index){const item=getSavedGames()[index];if(item)startReplay(item.pgn)}
-function startReplay(pgn){const candidate=new Chess();if(!candidate.load_pgn(pgn)){toast('This saved PGN could not be replayed.');return}stopReplayPlay();replayState={liveGame:game,liveManualGameResult:manualGameResult,fullPgn:candidate.pgn({max_width:80}),moves:candidate.history({verbose:true}),cursor:0,lastMove:null};manualGameResult=null;game=new Chess();selected=null;targets=[];showGame();document.getElementById('replayPlay').disabled=false;document.getElementById('exitReplay').disabled=false;updateReplayLabel();drawBoard();renderMoves();toast('Replay opened. Use Play or choose any move in the timeline.')}
+function startReplay(pgn){const candidate=new Chess();if(!candidate.load_pgn(pgn)){toast('This saved PGN could not be replayed.');return}stopReplayPlay();replayState={liveGame:game,liveManualGameResult:manualGameResult,fullPgn:candidate.pgn({max_width:80}),moves:candidate.history({verbose:true}),cursor:0,lastMove:null};manualGameResult=null;game=new Chess();selected=null;targets=[];showGame();document.getElementById('replayPlay').disabled=false;document.getElementById('exitReplay').disabled=false;updateReplayLabel();drawBoard();renderMoves();toast('Coach Review opened. Move-by-move explanations appear when analysis is available.')}
 function replayStep(delta){if(!replayState){if(delta===1||delta===999){startReplay(game.pgn());if(delta===1||delta===999)replayStep(delta===1?1:999)}else toast('Open a saved game or use Next to start replay.');return}stopReplayPlay();const r=replayState;r.cursor=delta===999?r.moves.length:delta===-999?0:Math.max(0,Math.min(r.moves.length,r.cursor+delta));renderReplayPosition()}
 function replayGoTo(ply){if(!replayState)return;stopReplayPlay();replayState.cursor=Math.max(0,Math.min(replayState.moves.length,ply));renderReplayPosition()}
-function renderReplayPosition(){const r=replayState;if(!r)return;const replay=new Chess();for(let i=0;i<r.cursor;i++)replay.move(r.moves[i]);game=replay;r.lastMove=r.cursor?r.moves[r.cursor-1]:null;r.isTerminalDraw=r.cursor===r.moves.length&&(replay.in_stalemate()||replay.in_draw())&&!replay.in_checkmate();if(r.cursor>0){if(r.cursor===r.moves.length&&replay.in_stalemate())playStalemateSound();else playMoveSound(r.moves[r.cursor-1]);}selected=null;targets=[];updateReplayLabel();drawBoard();if(activeReviewRowIndex>=0)drawReviewArrow();renderMoves();renderReplayTimeline()}
+function renderReplayPosition(){const r=replayState;if(!r)return;const replay=new Chess();for(let i=0;i<r.cursor;i++)replay.move(r.moves[i]);game=replay;r.lastMove=r.cursor?r.moves[r.cursor-1]:null;r.isTerminalDraw=r.cursor===r.moves.length&&(replay.in_stalemate()||replay.in_draw())&&!replay.in_checkmate();if(r.cursor>0){if(r.cursor===r.moves.length&&replay.in_stalemate())playStalemateSound();else playMoveSound(r.moves[r.cursor-1]);}selected=null;targets=[];updateReplayLabel();drawBoard();syncCoachReviewToReplay(r.cursor);renderMoves();renderReplayTimeline()}
 function renderReplayTimeline(){const el=document.getElementById('replayTimeline');if(!el)return;if(!replayState){el.innerHTML='<span class="muted">Start a replay to see moves.</span>';return}const r=replayState;let html='<button onclick="replayGoTo(0)" class="'+(r.cursor===0?'active':'')+'">Start</button>';r.moves.forEach((m,i)=>{const label=(i%2===0?(Math.floor(i/2)+1)+'. ':'')+m.san;html+='<button class="'+(r.cursor===i+1?'active':'')+'" onclick="replayGoTo('+(i+1)+')">'+label+'</button>'});el.innerHTML=html;const active=el.querySelector('.active');if(active){const box=el.getBoundingClientRect(),item=active.getBoundingClientRect();if(item.top<box.top)el.scrollTop-=box.top-item.top;else if(item.bottom>box.bottom)el.scrollTop+=item.bottom-box.bottom;if(item.left<box.left)el.scrollLeft-=box.left-item.left;else if(item.right>box.right)el.scrollLeft+=item.right-box.right}}
-function updateReplayLabel(){if(!replayState)return;const r=replayState;document.getElementById('replayCount').textContent='Position '+r.cursor+'/'+r.moves.length+' plies';document.getElementById('replayPlay').textContent=replayTimer?'Ⅱ Pause':'▶ Play'}
-function toggleReplayPlay(){if(!replayState){toast('Open a saved game first.');return}if(replayTimer){stopReplayPlay();return}if(soundEnabled&&soundVolume>0)getAudio();if(replayState.cursor>=replayState.moves.length)replayState.cursor=0;document.getElementById('replayPlay').textContent='Ⅱ Pause';replayTimer=setInterval(()=>{if(!replayState||replayState.cursor>=replayState.moves.length){stopReplayPlay();return}replayState.cursor++;renderReplayPosition();if(replayState.cursor>=replayState.moves.length)stopReplayPlay()},Number(document.getElementById('replaySpeed').value)||1000)}
-function stopReplayPlay(){if(replayTimer){clearInterval(replayTimer);replayTimer=null}const b=document.getElementById('replayPlay');if(b)b.textContent='▶ Play'}
+function updateReplayLabel(){if(!replayState)return;const r=replayState;document.getElementById('replayCount').textContent='Position '+r.cursor+'/'+r.moves.length+' plies';document.getElementById('replayPlay').textContent=replayTimer?'Ⅱ Pause Coach Review':'♟ Coach Review'}
+async function toggleReplayPlay(){if(replayTimer){stopReplayPlay();return}const button=document.getElementById('replayPlay');const pgn=replayState?currentAnalysisPGN():game.pgn();if(!pgn||(!replayState&&!game.history().length)){toast('Play or import a game first, then start Coach Review.');return}restoreCachedCoachReview();if(!getReviewRows().length){if(analysisBusy){toast('Analysis is already running. Please wait for it to finish.');return}if(button){button.disabled=true;button.textContent='Preparing Coach Review…'}try{await runGameAnalysis('quick')}finally{if(button){button.disabled=false;button.textContent='♟ Coach Review'}}restoreCachedCoachReview();if(!getReviewRows().length){toast('Coach Review could not prepare. Check the analysis message and try again.');return}}if(!replayState){startReplay(pgn);if(!replayState)return}if(soundEnabled&&soundVolume>0)getAudio();if(replayState.cursor>=replayState.moves.length){replayState.cursor=0;renderReplayPosition()}if(button)button.textContent='Ⅱ Pause Coach Review';replayTimer=setInterval(()=>{if(!replayState||replayState.cursor>=replayState.moves.length){stopReplayPlay();return}replayState.cursor++;renderReplayPosition();if(replayState.cursor>=replayState.moves.length)stopReplayPlay()},Number(document.getElementById('replaySpeed').value)||1000)}
+function stopReplayPlay(){if(replayTimer){clearInterval(replayTimer);replayTimer=null}const b=document.getElementById('replayPlay');if(b)b.textContent='♟ Coach Review'}
 function changeReplaySpeed(){if(replayTimer){stopReplayPlay();toggleReplayPlay()}}
-function exitReplay(){if(!replayState)return;stopReplayPlay();game=replayState.liveGame;manualGameResult=replayState.liveManualGameResult||null;replayState=null;document.getElementById('replayCount').textContent='Live game';document.getElementById('replayPlay').disabled=true;document.getElementById('exitReplay').disabled=true;document.getElementById('replayTimeline').innerHTML='<span class="muted">Start a replay to see moves.</span>';selected=null;targets=[];drawBoard();renderMoves()}
+function exitReplay(){if(!replayState)return;stopReplayPlay();game=replayState.liveGame;manualGameResult=replayState.liveManualGameResult||null;replayState=null;document.getElementById('replayCount').textContent='Live game';document.getElementById('exitReplay').disabled=true;document.getElementById('replayTimeline').innerHTML='<span class="muted">Start a replay to see moves.</span>';selected=null;targets=[];drawBoard();renderMoves()}
 
 let stockfishWorker=null,engineReady=false,enginePromise=null,analysisBusy=false;
 function getEngine(){
@@ -616,28 +616,50 @@ async function runGameAnalysis(mode,force=false){
 
 /* Chess Master move-by-move review layer */
 let activeReviewRowIndex=-1,activeReviewMode='quick';
-let reviewArrowUci='',reviewTimer=null,reviewAutoAdvancing=false;
-function stopReviewPlay(){if(reviewTimer){clearInterval(reviewTimer);reviewTimer=null}const button=document.getElementById('reviewPlay');if(button)button.textContent='▶ Play review'}
-function toggleReviewPlay(){
-  const rows=getReviewRows();if(!rows.length){toast('Complete an analysis before playing the move review.');return}
-  if(reviewTimer){stopReviewPlay();return}
-  if(activeReviewRowIndex<0||activeReviewRowIndex>=rows.length-1)reviewAnalysisMove(0);
-  const button=document.getElementById('reviewPlay');if(button)button.textContent='Ⅱ Pause review';
-  reviewTimer=setInterval(()=>{
-    const next=activeReviewRowIndex+1;
-    if(next>=getReviewRows().length){stopReviewPlay();return}
-    reviewAutoAdvancing=true;reviewAnalysisMove(next);reviewAutoAdvancing=false;
-    if(next>=getReviewRows().length-1)stopReviewPlay();
-  },1500);
-}
+let reviewArrowUci='';
 function getReviewRows(){
   return analysisRowsByMode[activeReviewMode]||analysisRowsByMode.quick||[];
+}
+
+function syncCoachReviewToReplay(ply){
+  const rows=getReviewRows(),row=rows.find(item=>item.ply===ply);
+  const coach=document.getElementById('reviewCoachText');
+  const hub=document.getElementById('gameReviewHub');
+  if(!row){
+    activeReviewRowIndex=-1;reviewArrowUci='';
+    if(ply===0&&coach)coach.textContent=rows.length?'Coach Review is ready. Start playback to follow the move explanations.':'Run Quick Analysis to unlock move-quality feedback and coach explanations. You can still replay the game here.';
+    else if(coach&&!rows.length)coach.textContent='Run Quick Analysis to unlock move-quality feedback and coach explanations. You can still replay the game here.';
+    const previous=document.getElementById('reviewPrevious'),next=document.getElementById('reviewNext');
+    if(previous)previous.disabled=true;if(next)next.disabled=true;
+    drawReviewArrow();
+    return;
+  }
+  activeReviewRowIndex=rows.indexOf(row);reviewArrowUci=row.bestUci||'';
+  const category=row.classification?.name||'Move';
+  const loss=hasCoachMetric(row.loss)?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
+  const evalText=hasCoachMetric(row.evalBefore)&&hasCoachMetric(row.evalAfter)?' Evaluation (White perspective): '+(row.evalBefore/100).toFixed(2)+' → '+(row.evalAfter/100).toFixed(2)+'. ':'';
+  const label='Move '+Math.ceil(row.ply/2)+(row.side==='White'?' · White':' · Black')+' · '+category;
+  if(coach)coach.textContent=label+'. '+category+'. '+explainMove(row)+evalText+(row.best?' Best continuation: '+row.best+'.':'')+loss;
+  const previous=document.getElementById('reviewPrevious'),next=document.getElementById('reviewNext');
+  if(previous)previous.disabled=activeReviewRowIndex<=0;
+  if(next)next.disabled=activeReviewRowIndex>=rows.length-1;
+  if(hub)hub.hidden=false;
+  drawReviewArrow();
 }
 function getReviewSaved(mode){
   const pgn=currentAnalysisPGN();
   if(!pgn)return null;
   const key='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
   try{return JSON.parse(localStorage.getItem(key)||'null')}catch(error){return null}
+}
+function restoreCachedCoachReview(){
+  if(getReviewRows().length)return;
+  for(const mode of ['quick','deep']){
+    const saved=getReviewSaved(mode);
+    if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
+      analysisRowsByMode[mode]=saved.rows;activeReviewMode=mode;renderPostGameReview(mode);return;
+    }
+  }
 }
 function getReviewOutcome(pgn){
   const candidate=new Chess();
@@ -651,7 +673,7 @@ function getReviewOutcome(pgn){
   return {title:'Game complete',note:'No rated online result is recorded for this local game.'};
 }
 function renderPostGameReview(mode){
-  stopReviewPlay();activeReviewRowIndex=-1;activeReviewMode=mode;const saved=getReviewSaved(mode);
+  activeReviewRowIndex=-1;activeReviewMode=mode;const saved=getReviewSaved(mode);
   if(!saved||!Array.isArray(saved.rows))return;
   const hub=document.getElementById('gameReviewHub');
   if(!hub)return;
@@ -670,10 +692,9 @@ function renderPostGameReview(mode){
   const first=saved.rows.length?0:-1;
   document.getElementById('reviewPrevious').disabled=true;
   document.getElementById('reviewNext').disabled=first<0;
-  document.getElementById('reviewPlay').disabled=first<0;
+
 }
 function reviewAnalysisMove(index){
-  if(!reviewAutoAdvancing)stopReviewPlay();
   const rows=getReviewRows(),row=rows[index];
   if(!row)return;
   const pgn=currentAnalysisPGN();
@@ -687,12 +708,7 @@ function reviewAnalysisMove(index){
   const category=row.classification?.name||'Move';
   const loss=hasCoachMetric(row.loss)?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
   const evalText=hasCoachMetric(row.evalBefore)&&hasCoachMetric(row.evalAfter)?' Evaluation (White perspective): '+(row.evalBefore/100).toFixed(2)+' → '+(row.evalAfter/100).toFixed(2)+'. ':'';
-  const coach=category+'. '+explainMove(row)+evalText+(row.best?' Best continuation: '+row.best+'.':'')+loss;
-  const label='Move '+Math.ceil(row.ply/2)+(row.side==='White'?' · White':' · Black')+' · '+category;
-  document.getElementById('reviewCoachText').textContent=label+'. '+coach;
-  document.getElementById('reviewPrevious').disabled=index<=0;
-  document.getElementById('reviewNext').disabled=index>=rows.length-1;
-  const play=document.getElementById('reviewPlay');if(play)play.disabled=!rows.length;
+  syncCoachReviewToReplay(row.ply);
   const hub=document.getElementById('gameReviewHub');if(hub)hub.hidden=false;
 }
 function ChessPgnCanonical(pgn){
