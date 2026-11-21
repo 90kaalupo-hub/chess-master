@@ -22,22 +22,23 @@ self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',event=>{
   const request=event.request;
-  const shareRequestUrl=new URL(request.url);
-  if(request.method==='POST'&&shareRequestUrl.origin===self.location.origin&&shareRequestUrl.pathname.startsWith(new URL(self.registration.scope).pathname)){
-    event.respondWith((async()=>{&&url.origin===self.location.origin&&url.pathname.startsWith(new URL(self.registration.scope).pathname)){
-    event.respondWith((async()=>{
-      try{
-        const form=await request.formData();
-        const file=form.get('pgn');
-        await saveIncomingShare({
-          title:String(form.get('title')||''),text:String(form.get('text')||''),url:String(form.get('url')||''),
-          pgnFile:file&&typeof file!=='string'?file:null,receivedAt:Date.now()
-        });
-        return Response.redirect(new URL('./?shared=1',self.registration.scope).href,303);
-      }catch(error){
-        return Response.redirect(new URL('./?shareError=1',self.registration.scope).href,303);
-      }
-    })());
+  if(request.method==='POST'){
+    const shareUrl=new URL(request.url);
+    if(shareUrl.origin===self.location.origin&&shareUrl.pathname.startsWith(new URL(self.registration.scope).pathname)){
+      event.respondWith((async()=>{
+        try{
+          const form=await request.formData();
+          const file=form.get('pgn');
+          await saveIncomingShare({
+            title:String(form.get('title')||''),text:String(form.get('text')||''),url:String(form.get('url')||''),
+            pgnFile:file&&typeof file!=='string'?file:null,receivedAt:Date.now()
+          });
+          return Response.redirect(new URL('./?shared=1',self.registration.scope).href,303);
+        }catch(error){
+          return Response.redirect(new URL('./?shareError=1',self.registration.scope).href,303);
+        }
+      })());
+    }
     return;
   }
   if(request.method!=='GET')return;
