@@ -558,7 +558,7 @@ async function runGameAnalysis(mode,force=false){
       const mateLoss=moverBefore>-mateThreshold&&moverAfter<=-mateThreshold;
       const missedMate=moverBefore>=mateThreshold&&moverAfter<mateThreshold;
       const mateDelivered=/#$/.test(played.san);
-      const bestFirstMove=(bestSan.split(/\\s+/)[0]||'');
+      const bestFirstMove=(bestSan.split(/\s+/)[0]||'');
       const bestIsForcing=/[+#]$/.test(bestFirstMove);
       // Also flag a missed forcing check when the engine's first move is a
       // check/mate and the played move gives up a meaningful amount. This
