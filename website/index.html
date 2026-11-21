@@ -698,7 +698,7 @@ function renderPostGameReview(mode){
   document.getElementById('reviewErrors').textContent=(counts.Mistake||0)+(counts.Blunder||0);
   document.getElementById('reviewCoachText').textContent='Analysis is ready. Tap any move in the move-by-move list to see the board position, move quality, engine alternative and explanation.';
   hub.hidden=false;
-  hub.scrollIntoView({behavior:'smooth',block:'nearest'});
+  // Keep the user's current viewport steady when analysis prepares or refreshes Game Review.
   const first=saved.rows.length?0:-1;
   document.getElementById('reviewPrevious').disabled=true;
   document.getElementById('reviewNext').disabled=first<0;
