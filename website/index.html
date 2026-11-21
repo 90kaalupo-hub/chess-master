@@ -63,7 +63,7 @@
 <div class="reviewMetrics"><div class="reviewMetric"><span>WHITE ACCURACY · EST.</span><strong id="reviewWhiteAccuracy">—</strong></div><div class="reviewMetric"><span>BLACK ACCURACY · EST.</span><strong id="reviewBlackAccuracy">—</strong></div></div>
 <div class="reviewMetrics"><div class="reviewMetric"><span>BEST / BRILLIANT MOVES</span><strong id="reviewBestMoves">—</strong></div><div class="reviewMetric"><span>MISTAKES / BLUNDERS</span><strong id="reviewErrors">—</strong></div></div>
 <div class="reviewCoach"><small>Chess Master coach</small><p id="reviewCoachText">Select a move below to understand what happened and what could be improved.</p></div>
-<div class="reviewNav"><button class="secondary" id="reviewPrevious" type="button" onclick="stepReviewMove(-1)" disabled>← Previous move</button><button class="primary" id="reviewNext" type="button" onclick="stepReviewMove(1)" disabled>Next move →</button></div>
+<div class="reviewNav"><button class="secondary" id="reviewPrevious" type="button" onclick="stepReviewMove(-1)" disabled>← Previous move</button><button class="primary" id="reviewPlay" type="button" onclick="toggleReviewPlay()" disabled>▶ Play review</button><button class="secondary" id="reviewNext" type="button" onclick="stepReviewMove(1)" disabled>Next move →</button></div>
 <p class="reviewNote">Move labels, accuracy and evaluations are Stockfish-backed Chess Master estimates. Local games do not change an online rating.</p>
 </section><div class="status" id="result">Game in progress</div></aside></div>
 </section>
@@ -595,7 +595,20 @@ async function runGameAnalysis(mode,force=false){
 
 /* Chess Master move-by-move review layer */
 let activeReviewRowIndex=-1,activeReviewMode='quick';
-let reviewArrowUci='';
+let reviewArrowUci='',reviewTimer=null,reviewAutoAdvancing=false;
+function stopReviewPlay(){if(reviewTimer){clearInterval(reviewTimer);reviewTimer=null}const button=document.getElementById('reviewPlay');if(button)button.textContent='▶ Play review'}
+function toggleReviewPlay(){
+  const rows=getReviewRows();if(!rows.length){toast('Complete an analysis before playing the move review.');return}
+  if(reviewTimer){stopReviewPlay();return}
+  if(activeReviewRowIndex<0||activeReviewRowIndex>=rows.length-1)reviewAnalysisMove(0);
+  const button=document.getElementById('reviewPlay');if(button)button.textContent='Ⅱ Pause review';
+  reviewTimer=setInterval(()=>{
+    const next=activeReviewRowIndex+1;
+    if(next>=getReviewRows().length){stopReviewPlay();return}
+    reviewAutoAdvancing=true;reviewAnalysisMove(next);reviewAutoAdvancing=false;
+    if(next>=getReviewRows().length-1)stopReviewPlay();
+  },1500);
+}
 function getReviewRows(){
   return analysisRowsByMode[activeReviewMode]||analysisRowsByMode.quick||[];
 }
@@ -617,7 +630,7 @@ function getReviewOutcome(pgn){
   return {title:'Game complete',note:'No rated online result is recorded for this local game.'};
 }
 function renderPostGameReview(mode){
-  activeReviewMode=mode;const saved=getReviewSaved(mode);
+  stopReviewPlay();activeReviewRowIndex=-1;activeReviewMode=mode;const saved=getReviewSaved(mode);
   if(!saved||!Array.isArray(saved.rows))return;
   const hub=document.getElementById('gameReviewHub');
   if(!hub)return;
@@ -636,8 +649,10 @@ function renderPostGameReview(mode){
   const first=saved.rows.length?0:-1;
   document.getElementById('reviewPrevious').disabled=true;
   document.getElementById('reviewNext').disabled=first<0;
+  document.getElementById('reviewPlay').disabled=first<0;
 }
 function reviewAnalysisMove(index){
+  if(!reviewAutoAdvancing)stopReviewPlay();
   const rows=getReviewRows(),row=rows[index];
   if(!row)return;
   const pgn=currentAnalysisPGN();
@@ -656,6 +671,7 @@ function reviewAnalysisMove(index){
   document.getElementById('reviewCoachText').textContent=label+'. '+coach;
   document.getElementById('reviewPrevious').disabled=index<=0;
   document.getElementById('reviewNext').disabled=index>=rows.length-1;
+  const play=document.getElementById('reviewPlay');if(play)play.disabled=!rows.length;
   const hub=document.getElementById('gameReviewHub');if(hub)hub.hidden=false;
 }
 function ChessPgnCanonical(pgn){
