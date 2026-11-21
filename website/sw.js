@@ -1,4 +1,4 @@
-const CACHE='chess-master-v02-analysis-review-64';
+const CACHE='chess-master-v02-analysis-review-65';
 const SHELL=['./','./index.html','./stockfish-worker-local.js','./manifest.webmanifest','./icon.svg','./offline.html','./THIRD-PARTY-NOTICES.html','./chess.js'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
