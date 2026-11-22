@@ -1,4 +1,4 @@
-const CACHE='chess-master-pgn-import-79';
+const CACHE='chess-master-v04-offline-bots-80';
 const SHARE_DB='chess-master-share-inbox';
 function openShareDb(){
   return new Promise((resolve,reject)=>{

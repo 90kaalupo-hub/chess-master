@@ -45,6 +45,14 @@ No paid hosting is required for a public GitHub Pages site, subject to GitHub's 
 - The prototype currently loads the pinned engine JavaScript and WASM from jsDelivr; first use requires internet. The service worker attempts to cache these engine responses for repeat/offline use, which still needs real-device verification.
 - The engine is not yet bundled in this repository. Offline operation, engine score orientation, accuracy calibration, move-classification thresholds, and mobile performance must be verified before calling analysis complete.
 
+## v0.4 — Offline AI opponents (feature branch)
+
+- Add a 12-opponent roster: Rookie, Scout, Rookie Plus, Tactician, Strategist, Guardian, Warrior, Wizard, Phantom, Grandmaster, Legend and Chess Master.
+- Reuse the locally hosted Stockfish 19.0.1 lite WebAssembly engine through the existing UCI worker; bot games do not require a remote API or account.
+- Add opponent selection, playing-side selection, per-opponent skill/time profiles, bot thinking status and turn locking.
+- Bot opponents are intended to remain free. Difficulty labels are progression tiers, not calibrated Elo ratings.
+- Validation still required: verify all 12 skill profiles produce legal moves, test both playing sides, promotions, undo/restart, game endings, offline cache readiness, mobile performance, and ensure analysis commands cannot conflict with bot turns. No real-browser/device QA is claimed by this initial implementation.
+
 ## Later roadmap
 
 Chess.com import, offline AI bots, puzzles, lessons, profiles, accounts, premium features and online multiplayer remain later milestones.
