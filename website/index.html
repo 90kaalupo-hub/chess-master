@@ -258,6 +258,8 @@ async function handleIncomingShare(){
         const parsed=new URL(gameUrl);
         if(parsed.protocol!=='https:'||!(parsed.hostname==='chess.com'||parsed.hostname.endsWith('.chess.com')))throw new Error('Invalid Chess.com link');
         gameUrl=parsed.href;
+        const linkField=document.getElementById('chessComLinkInput');
+        if(linkField)linkField.value=gameUrl;
         showGame();showImport();
         const status=document.getElementById('importStatus');
         status.textContent='Chess.com game link received. Share the PGN export from Chess.com to load the moves directly; automatic lookup from a game link is not available through the documented public API.';
