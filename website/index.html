@@ -194,7 +194,7 @@ function importChessComLink(){
   if(!raw){status.textContent='Paste a Chess.com game link first.';return}
   try{
     const parsed=new URL(raw);
-    if(parsed.protocol!=='https:'||!(parsed.hostname==='chess.com'||parsed.hostname==='www.chess.com')||!/^\/game\/(live|daily)\/\d+\/?$/.test(parsed.pathname)){
+    if(parsed.protocol!=='https:'||!(parsed.hostname==='chess.com'||parsed.hostname==='www.chess.com')||!/^\/(?:game\/(?:live|daily)|(?:live|daily)\/game)\/\d+\/?$/.test(parsed.pathname)){
       status.textContent='That link is not a supported public Chess.com game URL. Use a link like https://www.chess.com/game/live/123456789.';
       return;
     }
