@@ -178,7 +178,7 @@ async function pasteChessComLink(){
     if(!navigator.clipboard||typeof navigator.clipboard.readText!=='function')throw new Error('Clipboard reading is not supported here');
     const copiedText=(await navigator.clipboard.readText()).trim();
     if(!copiedText){status.textContent='Your clipboard is empty. Copy a Chess.com game link first.';return}
-    const match=copiedText.match(/https?:\/\/(?:www\.)?chess\.com\/game\/(?:live|daily)\/\d+(?:[^\s]*)?/i);
+    const match=copiedText.match(/https?:\/\/(?:www\.)?chess\.com\/(?:game\/(?:live|daily)|(?:live|daily)\/game)\/\d+(?:[^\s]*)?/i);
     if(!match){status.textContent='No Chess.com game link was found in your clipboard. Copy the game link and try again.';return}
     field.value=match[0].replace(/[),.;]+$/,'');
     field.focus();
@@ -204,7 +204,6 @@ function importChessComLink(){
       return;
     }
     showChessComImportHelp(parsed.href);
-    status.scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(error){
     status.textContent='Could not check that link: '+(error&&error.message?error.message:'Please paste a complete HTTPS Chess.com game URL.');
   }
@@ -223,7 +222,7 @@ function showChessComImportHelp(gameUrl){
     }catch(error){}
   }
 }
-function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const chessComLink=raw.match(/^https?:\/\/(?:www\.)?chess\.com\/game\/(?:live|daily)\/\d+(?:[^\s]*)?$/i);if(chessComLink){showChessComImportHelp(chessComLink[0]);return}const candidate=new Chess();if(!candidate.load_pgn(raw)||!candidate.history().length){document.getElementById('importStatus').textContent='Could not read that PGN or it contains no moves. Please check the file and try again.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;const importedHeaders=candidate.header()||{};manualGameResult=importedHeaders.Result==='1-0'?'White wins':importedHeaders.Result==='0-1'?'Black wins':importedHeaders.Result==='1/2-1/2'?'Draw':null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded. Starting automatic analysis…');window.setTimeout(()=>{analyseCurrentGame().catch(error=>{console.error('Imported game analysis failed',error);toast('Game imported, but automatic analysis could not start. Tap Quick Analysis to retry.')})},250)}
+function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const chessComLink=raw.match(/^https?:\/\/(?:www\.)?chess\.com\/(?:game\/(?:live|daily)|(?:live|daily)\/game)\/\d+\/?(?:[?#].*)?$/i);if(chessComLink){showChessComImportHelp(chessComLink[0]);return}const candidate=new Chess();if(!candidate.load_pgn(raw)||!candidate.history().length){document.getElementById('importStatus').textContent='Could not read that PGN or it contains no moves. Please check the file and try again.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;const importedHeaders=candidate.header()||{};manualGameResult=importedHeaders.Result==='1-0'?'White wins':importedHeaders.Result==='0-1'?'Black wins':importedHeaders.Result==='1/2-1/2'?'Draw':null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded. Starting automatic analysis…');window.setTimeout(()=>{analyseCurrentGame().catch(error=>{console.error('Imported game analysis failed',error);toast('Game imported, but automatic analysis could not start. Tap Quick Analysis to retry.')})},250)}
 
 async function readIncomingShare(){
   return new Promise((resolve,reject)=>{
