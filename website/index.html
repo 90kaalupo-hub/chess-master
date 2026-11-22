@@ -163,7 +163,7 @@ function selectBot(index){selectedBot=BOT_PROFILES[index]||BOT_PROFILES[0];rende
 function openBotSetup(){showHome();document.getElementById('botSetupPanel').classList.remove('hidden');renderBotRoster();document.getElementById('botSetupPanel').scrollIntoView({behavior:'smooth',block:'start'})}
 function closeBotSetup(){document.getElementById('botSetupPanel').classList.add('hidden')}
 function startBotGame(){
- humanSide=document.getElementById('botSide').value==='b'?'b':'w';botMode=true;botThinking=false;botGameToken++;
+ humanSide=document.getElementById('botSide').value==='b'?'b':'w';botMode=true;botThinking=false;botGameToken++;document.getElementById('botThinkingStatus').textContent='';
  clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=humanSide==='b';closeBotSetup();showGame();
  document.getElementById('gameModeEyebrow').textContent='Offline AI challenge';document.getElementById('gameTitle').textContent='vs '+selectedBot.name;document.getElementById('gameHelpText').textContent='You are '+(humanSide==='w'?'White':'Black')+'. '+selectedBot.name+' plays offline on this device.';
  if(humanSide==='b')scheduleBotMove();else updateStatus();
@@ -183,7 +183,7 @@ async function scheduleBotMove(){
   if(token!==botGameToken||!botMode)return;
   const match=output.line.match(/^bestmove\s+([a-h][1-8][a-h][1-8][qrbn]?)/);
   if(!match)throw new Error('The engine did not return a legal move.');
-  const uci=match[1],move=game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||'q'});
+  const uci=match[1];if(status)status.textContent='';const move=game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||'q'});
   if(!move)throw new Error('The engine returned a move that is not legal in this position.');
   selected=null;targets=[];saveCurrentGame();drawBoard();renderMoves();if(game.in_checkmate())showCheckmate(game.turn()==='w'?'Black':'White');else if(game.in_stalemate())showDraw('Stalemate!','Neither player can make a legal move, and the king is not in check.','stalemate');else if(game.in_draw())showDraw('Game drawn','The game has ended in a draw.','draw');
  }catch(error){if(token===botGameToken){toast('The AI move could not be completed. Tap Retry AI move to try again.');if(status)status.innerHTML='<button type="button" class="secondary" onclick="scheduleBotMove()">↻ Retry AI move</button>';console.error('Offline bot move failed',error)}}
@@ -231,7 +231,7 @@ function clearGameAnalysisState(){
     const exportButton=document.getElementById(exportId);if(exportButton)exportButton.disabled=true;
   });
 }
-function newGame(){if(botMode){if(replayState)exitReplay();if(game&&game.history().length&&!confirm('Start a new game against '+selectedBot.name+'?'))return;clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();selected=null;targets=[];flipped=humanSide==='b';botGameToken++;botThinking=false;drawBoard();renderMoves();if(humanSide==='b')scheduleBotMove();return}if(replayState)exitReplay();if(game&&game.history().length&&!confirm('Start a new game? The current game will be cleared.'))return;clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();ratingEligible=true;selected=null;targets=[];flipped=false;drawBoard();renderMoves()}
+function newGame(){if(botMode){if(replayState)exitReplay();if(game&&game.history().length&&!confirm('Start a new game against '+selectedBot.name+'?'))return;clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();selected=null;targets=[];flipped=humanSide==='b';botGameToken++;botThinking=false;document.getElementById('botThinkingStatus').textContent='';drawBoard();renderMoves();if(humanSide==='b')scheduleBotMove();return}if(replayState)exitReplay();if(game&&game.history().length&&!confirm('Start a new game? The current game will be cleared.'))return;clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();ratingEligible=true;selected=null;targets=[];flipped=false;drawBoard();renderMoves()}
 async function copyPGN(){const pgn=replayState?replayState.fullPgn:(game?game.pgn({max_width:80}):'');if(!pgn){toast('No game moves are available to copy.');return}try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(pgn);toast('PGN copied.');return}}catch(e){}try{const field=document.createElement('textarea');field.value=pgn;field.setAttribute('readonly','');field.style.position='fixed';field.style.top='0';field.style.left='-9999px';field.style.opacity='0';document.body.appendChild(field);field.focus();field.select();field.setSelectionRange(0,field.value.length);const copied=document.execCommand('copy');field.remove();if(copied){toast('PGN copied.');return}}catch(e){}window.prompt('Copy your PGN:',pgn);}
 function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const candidate=new Chess();if(!candidate.load_pgn(raw)||!candidate.history().length){document.getElementById('importStatus').textContent='Could not read that PGN or it contains no moves. Please check the file and try again.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;const importedHeaders=candidate.header()||{};manualGameResult=importedHeaders.Result==='1-0'?'White wins':importedHeaders.Result==='0-1'?'Black wins':importedHeaders.Result==='1/2-1/2'?'Draw':null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded. Starting automatic analysis…');window.setTimeout(()=>{analyseCurrentGame().catch(error=>{console.error('Imported game analysis failed',error);toast('Game imported, but automatic analysis could not start. Tap Quick Analysis to retry.')})},250)}
 
@@ -694,6 +694,7 @@ async function analyseCurrentGame(){return runGameAnalysis('quick')}
 async function analyseCurrentGameDeep(){return runGameAnalysis('deep')}
 async function runGameAnalysis(mode,force=false){
   if(analysisBusy)return;
+  if(botMode&&!game.game_over()&&!manualGameResult){toast('Finish your game against '+selectedBot.name+' before running analysis.');return;}
   let pgn=game.pgn();if(replayState){const replayPGN=new Chess();replayState.moves.forEach(move=>replayPGN.move(move));pgn=replayPGN.pgn();}
   if(!pgn){toast('Play or load a game before analysing.');return}
   const candidate=new Chess();
@@ -727,6 +728,8 @@ async function runGameAnalysis(mode,force=false){
     const worker=await getEngine();
     status.textContent='Preparing Stockfish';
     await engineCommand(worker,'uci',line=>line==='uciok',60000);
+    await engineCommand(worker,'isready',line=>line==='readyok',30000);
+    worker.postMessage('setoption name Skill Level value 20');
     await engineCommand(worker,'isready',line=>line==='readyok',30000);
     worker.postMessage('ucinewgame');
     const moves=candidate.history({verbose:true}),replay=new Chess(),positions=[{fen:replay.fen(),ply:0,move:'Start',side:'—'}];
