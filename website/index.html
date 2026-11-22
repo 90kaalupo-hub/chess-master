@@ -223,6 +223,7 @@ function drawBoard(){
  let index=0;
  for(const r of rows)for(const c of cols){
   const name='abcdefgh'[c]+(8-r),piece=board[r][c],sq=el.children[index++];
+  sq.dataset.square=name;sq.onclick=()=>tapSquare(name);
   sq.className='sq '+((r+c)%2?'dark':'light');
   if(selected===name)sq.classList.add('selected');
   if(replayState&&replayState.lastMove&&(replayState.lastMove.from===name||replayState.lastMove.to===name))sq.classList.add('lastMove');
