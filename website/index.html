@@ -154,6 +154,7 @@ let botMode=false,botThinking=false,humanSide='w',selectedBot=BOT_PROFILES[0],bo
 function renderBotRoster(){
  const roster=document.getElementById('botRoster');if(!roster)return;
  roster.innerHTML=BOT_PROFILES.map((bot,i)=>'<button type="button" class="botCard" data-bot-index="'+i+'" aria-pressed="'+(selectedBot.name===bot.name?'true':'false')+'" onclick="selectBot('+i+')"><span class="botAvatar" aria-hidden="true">'+bot.icon+'</span><strong>'+bot.name+'</strong><small>'+bot.style+'</small><span class="botLevel">'+bot.level+'</span></button>').join('');
+ const start=document.getElementById('startBotGameBtn');if(start)start.textContent='Start game vs '+selectedBot.name;
  updateBotSetupHint();
 }
 function updateBotSetupHint(){
@@ -949,7 +950,7 @@ function drawReviewArrow(){
   board.appendChild(svg);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{const start=document.createElement('button');start.type='button';start.className='primary';start.textContent='Start game vs '+selectedBot.name;start.onclick=startBotGame;document.querySelector('#botSetupPanel .botSetupFoot').appendChild(start);renderBotRoster()});
+document.addEventListener('DOMContentLoaded',()=>{const start=document.createElement('button');start.id='startBotGameBtn';start.type='button';start.className='primary';start.onclick=startBotGame;document.querySelector('#botSetupPanel .botSetupFoot').appendChild(start);renderBotRoster()});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
 
 loadAnalysisRatings();
