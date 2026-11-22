@@ -172,6 +172,661 @@ function newGame(){if(replayState)exitReplay();if(game&&game.history().length&&!
 async function copyPGN(){const pgn=replayState?replayState.fullPgn:(game?game.pgn({max_width:80}):'');if(!pgn){toast('No game moves are available to copy.');return}try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(pgn);toast('PGN copied.');return}}catch(e){}try{const field=document.createElement('textarea');field.value=pgn;field.setAttribute('readonly','');field.style.position='fixed';field.style.top='0';field.style.left='-9999px';field.style.opacity='0';document.body.appendChild(field);field.focus();field.select();field.setSelectionRange(0,field.value.length);const copied=document.execCommand('copy');field.remove();if(copied){toast('PGN copied.');return}}catch(e){}window.prompt('Copy your PGN:',pgn);}
 function loadPGN(){const raw=document.getElementById('pgnInput').value.trim();if(!raw){document.getElementById('importStatus').textContent='Paste a PGN first.';return}const candidate=new Chess();if(!candidate.load_pgn(raw)||!candidate.history().length){document.getElementById('importStatus').textContent='Could not read that PGN or it contains no moves. Please check the file and try again.';return}stopReplayPlay();replayState=null;const replayPlay=document.getElementById('replayPlay'),exitReplayButton=document.getElementById('exitReplay'),replayCount=document.getElementById('replayCount'),replayTimeline=document.getElementById('replayTimeline');if(replayPlay)replayPlay.disabled=true;if(exitReplayButton)exitReplayButton.disabled=true;if(replayCount)replayCount.textContent='Live game';if(replayTimeline)replayTimeline.innerHTML='<span class="muted">Start a replay to see moves.</span>';clearGameAnalysisState();game=candidate;const importedHeaders=candidate.header()||{};manualGameResult=importedHeaders.Result==='1-0'?'White wins':importedHeaders.Result==='0-1'?'Black wins':importedHeaders.Result==='1/2-1/2'?'Draw':null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=false;document.getElementById('importStatus').textContent='PGN loaded successfully.';hideImport();showGame();renderMoves();saveCurrentGame();toast('PGN game loaded. Starting automatic analysis…');window.setTimeout(()=>{analyseCurrentGame().catch(error=>{console.error('Imported game analysis failed',error);toast('Game imported, but automatic analysis could not start. Tap Quick Analysis to retry.')})},250)}
 
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.display='none',2600)}
+function updateSoundButton(){const b=document.getElementById('soundToggle'),slider=document.getElementById('soundVolume'),value=document.getElementById('soundVolumeValue');if(b){b.textContent=soundEnabled?'Sound: On':'Sound: Off';b.setAttribute('aria-pressed',String(soundEnabled))}if(slider)slider.value=String(soundVolume);if(value)value.textContent=soundVolume+'%'}
+let soundVolume=Number(localStorage.getItem('chessMasterSoundVolume')||65);if(!Number.isFinite(soundVolume))soundVolume=65;soundVolume=Math.max(0,Math.min(100,soundVolume));
+function setSoundVolume(value){soundVolume=Math.max(0,Math.min(100,Number(value)||0));try{localStorage.setItem('chessMasterSoundVolume',String(soundVolume))}catch(e){}updateSoundButton();if(soundVolume>0&&soundEnabled)playCaptureSound()}
+function toggleSound(){soundEnabled=!soundEnabled;try{localStorage.setItem('chessMasterSound',soundEnabled?'on':'off')}catch(e){}updateSoundButton();if(soundEnabled)playTone([660,880],.11);else toast('Sound effects muted.')}
+function getAudio(){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return null;if(!audioContext)audioContext=new AudioCtx();if(audioContext.state==='suspended')audioContext.resume();return audioContext}
+function playTone(notes,duration=.12){if(!soundEnabled||soundVolume<=0)return;try{const ctx=getAudio();if(!ctx)return;const now=ctx.currentTime,master=soundVolume/100;notes.forEach((note,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain(),start=now+i*.09;osc.type='sine';osc.frequency.setValueAtTime(note,start);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.12*master,start+.018);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);osc.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(start+duration+.02)})}catch(e){}}
+function playCaptureSound(){if(!soundEnabled||soundVolume<=0)return;try{const ctx=getAudio();if(!ctx)return;const now=ctx.currentTime,level=soundVolume/100;const thud=ctx.createOscillator(),thudGain=ctx.createGain(),tick=ctx.createOscillator(),tickGain=ctx.createGain();thud.type='triangle';thud.frequency.setValueAtTime(190,now);thud.frequency.exponentialRampToValueAtTime(72,now+.105);thudGain.gain.setValueAtTime(.0001,now);thudGain.gain.exponentialRampToValueAtTime(.22*level,now+.008);thudGain.gain.exponentialRampToValueAtTime(.0001,now+.14);tick.type='square';tick.frequency.setValueAtTime(760,now+.012);tick.frequency.exponentialRampToValueAtTime(310,now+.065);tickGain.gain.setValueAtTime(.0001,now);tickGain.gain.exponentialRampToValueAtTime(.045*level,now+.01);tickGain.gain.exponentialRampToValueAtTime(.0001,now+.085);thud.connect(thudGain);tick.connect(tickGain);thudGain.connect(ctx.destination);tickGain.connect(ctx.destination);thud.start(now);tick.start(now);thud.stop(now+.15);tick.stop(now+.09)}catch(e){}}
+function playCheckSound(){if(!soundEnabled||soundVolume<=0)return;try{const ctx=getAudio();if(!ctx)return;const now=ctx.currentTime,level=soundVolume/100;[784,1046].forEach((frequency,i)=>{const start=now+i*.145,duration=.13,osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(frequency,start);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.105*level,start+.012);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);osc.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(start+duration+.015)})}catch(e){}}
+function playStalemateSound(){if(!soundEnabled||soundVolume<=0)return;try{const ctx=getAudio();if(!ctx)return;const now=ctx.currentTime,level=soundVolume/100;[659.25,587.33,523.25,392].forEach((frequency,i)=>{const start=now+i*.19,duration=.24,osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(frequency,start);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.075*level,start+.025);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);osc.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(start+duration+.02)})}catch(e){}}
+function playMoveSound(move){if(game.in_checkmate()){playTone([523,659,784,1047],.28);return}if(game.in_check()){playCheckSound();return}if(move.flags&&(move.flags.includes('c')||move.flags.includes('e'))){playCaptureSound();return}if(move.flags&&(move.flags.includes('k')||move.flags.includes('q'))){playTone([392,523],.11);return}if(move.flags&&move.flags.includes('p')){playTone([523,659,784],.16);return}playTone([440,620],.055)}
+function showCheckmate(winner){const overlay=document.getElementById('mateOverlay');document.getElementById('mateWinner').textContent=winner+' wins';overlay.classList.add('show');clearTimeout(mateTimer);mateTimer=setTimeout(hideCheckmate,5200)}
+function hideCheckmate(){const overlay=document.getElementById('mateOverlay');if(overlay)overlay.classList.remove('show');clearTimeout(mateTimer)}
+function showDraw(title,message,type){const overlay=document.getElementById('drawOverlay'),card=document.getElementById('drawCard'),seal=document.getElementById('drawSeal');document.getElementById('drawTitle').textContent=title;document.getElementById('drawMessage').textContent=message;card.classList.remove('drawCard--stalemate','drawCard--draw');void card.offsetWidth;card.classList.add(type==='stalemate'?'drawCard--stalemate':'drawCard--draw');seal.textContent=type==='stalemate'?'♚':'½–½';overlay.classList.remove('show');void overlay.offsetWidth;overlay.classList.add('show');card.style.animation='none';seal.style.animation='none';void card.offsetWidth;card.style.animation='';seal.style.animation=''}
+function hideDraw(){const overlay=document.getElementById('drawOverlay');if(overlay)overlay.classList.remove('show')}
+function offerDraw(){if(replayState||manualGameResult||!game||game.game_over()){toast('A draw cannot be offered now.');return}document.getElementById('drawOfferOverlay').classList.add('show')}
+function closeDrawOffer(){document.getElementById('drawOfferOverlay').classList.remove('show')}
+function declineDrawOffer(){closeDrawOffer();toast('Draw offer declined. Play continues.')}
+function acceptDrawOffer(){if(!confirm('Are both players sure they want to accept the draw? The game will end as a draw.'))return;closeDrawOffer();manualGameResult='Draw by agreement';selected=null;targets=[];saveCurrentGame();updateStatus();drawBoard();showDraw('Draw agreed','Both players accepted the draw. The game has ended.','draw')}
+function resignGame(){if(replayState||manualGameResult||!game||game.game_over()){toast('This game has already ended.');return}const side=game.turn()==='w'?'White':'Black';if(!confirm(side+' to move: are you sure you want to resign?'))return;manualGameResult=side+' resigned — '+(side==='White'?'Black':'White')+' wins';selected=null;targets=[];saveCurrentGame();updateStatus();drawBoard();toast(side+' resigned. '+(side==='White'?'Black':'White')+' wins.')}
+
+
+function getSavedGames(){try{return JSON.parse(localStorage.getItem('chessMasterGames')||'[]')}catch(e){return[]}}
+function persistSavedGames(games){localStorage.setItem('chessMasterGames',JSON.stringify(games))}
+function saveCurrentGame(){if(!game||replayState||(!game.history().length&&!manualGameResult))return;applyCompletedGameRatings();try{const games=getSavedGames();const existing=games.find(g=>g.id===currentGameId);const item={id:currentGameId,pgn:game.pgn(),headers:game.header?game.header():{},imported:!ratingEligible,date:new Date().toISOString(),moves:game.history().length,result:manualGameResult|| (game.in_checkmate()?(game.turn()==='w'?'Black wins':'White wins'):game.in_stalemate()?'Draw by stalemate':game.in_threefold_repetition()?'Draw by repetition':game.insufficient_material()?'Draw — insufficient material':game.in_draw()?'Draw':'In progress'),keepForever:!!(existing&&existing.keepForever)};const at=games.findIndex(g=>g.id===currentGameId);if(at>=0)games[at]=item;else games.unshift(item);const pinned=games.filter(g=>g.keepForever),recent=games.filter(g=>!g.keepForever).slice(0,30);persistSavedGames([...pinned,...recent]);renderSavedGames()}catch(e){toast('Could not save game on this device. Check browser storage settings.')}}
+function renderSavedGames(){const el=document.getElementById('savedGames');if(!el)return;const games=getSavedGames();if(!games.length){el.innerHTML='<p class="muted">No saved games yet. Play a few moves and your game will be saved automatically.</p>';return}el.innerHTML='';games.forEach((g,i)=>{const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap';const info=document.createElement('div');info.style.flex='1 1 150px';const strong=document.createElement('strong');strong.textContent=(g.keepForever?'★ ':'')+(g.result||'Saved game');const small=document.createElement('div');small.className='muted';small.textContent=(g.moves||0)+' plies · '+new Date(g.date).toLocaleString()+(g.keepForever?' · Kept forever':'');info.append(strong,small);const actions=document.createElement('div');actions.style.cssText='display:flex;gap:6px;flex-wrap:wrap';const review=document.createElement('button');review.className='secondary';review.textContent='Review';review.onclick=()=>openSavedGame(i);const keep=document.createElement('button');keep.className='secondary';keep.textContent=g.keepForever?'Unkeep':'Keep forever';keep.setAttribute('aria-pressed',String(!!g.keepForever));keep.onclick=()=>toggleSavedGameForever(g.id);const remove=document.createElement('button');remove.className='secondary';remove.textContent='Delete';remove.onclick=()=>deleteSavedGame(g.id);actions.append(review,keep,remove);row.append(info,actions);el.append(row)})}
+function toggleSavedGameForever(id){const games=getSavedGames(),item=games.find(g=>g.id===id);if(!item)return;item.keepForever=!item.keepForever;const pinned=games.filter(g=>g.keepForever),recent=games.filter(g=>!g.keepForever).slice(0,30);try{persistSavedGames([...pinned,...recent]);renderSavedGames();toast(item.keepForever?'Game saved permanently on this device.':'Game returned to recent history.')}catch(e){toast('Could not update this saved game.')}}
+function deleteSavedGame(id){const games=getSavedGames(),item=games.find(g=>g.id===id);if(!item)return;const label=item.keepForever?'kept/favourite game':'game';if(!confirm('Delete this '+label+' from your history? You do not need to unkeep it first. This cannot be undone.'))return;try{persistSavedGames(games.filter(g=>g.id!==id));renderSavedGames();toast('Game deleted from history.')}catch(e){toast('Could not delete this game.')}}
+function deleteAllSavedGames(){const games=getSavedGames();if(!games.length){toast('There are no saved games to delete.');return}const recent=games.filter(g=>!g.keepForever),kept=games.filter(g=>g.keepForever);if(!recent.length){toast('No recent games to delete. Your kept games are safe.');return}if(!confirm('Delete all '+recent.length+' recent game(s)? '+kept.length+' kept/favourite game(s) will be preserved. This cannot be undone.'))return;try{persistSavedGames(kept);renderSavedGames();toast('Recent game history deleted. Kept/favourite games were preserved.')}catch(e){toast('Could not delete game history.')}}
+function openSavedGame(index){const item=getSavedGames()[index];if(item)startReplay(item.pgn)}
+function startReplay(pgn){const candidate=new Chess();if(!candidate.load_pgn(pgn)){toast('This saved PGN could not be replayed.');return}stopReplayPlay();replayState={liveGame:game,liveManualGameResult:manualGameResult,fullPgn:candidate.pgn({max_width:80}),moves:candidate.history({verbose:true}),cursor:0,lastMove:null};manualGameResult=null;game=new Chess();selected=null;targets=[];showGame();document.getElementById('replayPlay').disabled=false;document.getElementById('exitReplay').disabled=false;updateReplayLabel();drawBoard();renderMoves();toast('Coach Review opened. Move-by-move explanations appear when analysis is available.')}
+function replayStep(delta){if(!replayState){if(delta===1||delta===999){startReplay(game.pgn());if(delta===1||delta===999)replayStep(delta===1?1:999)}else toast('Open a saved game or use Next to start replay.');return}stopReplayPlay();const r=replayState;r.cursor=delta===999?r.moves.length:delta===-999?0:Math.max(0,Math.min(r.moves.length,r.cursor+delta));renderReplayPosition()}
+function replayGoTo(ply){if(!replayState)return;stopReplayPlay();replayState.cursor=Math.max(0,Math.min(replayState.moves.length,ply));renderReplayPosition()}
+function renderReplayPosition(){const r=replayState;if(!r)return;const replay=new Chess();for(let i=0;i<r.cursor;i++)replay.move(r.moves[i]);game=replay;r.lastMove=r.cursor?r.moves[r.cursor-1]:null;r.isTerminalDraw=r.cursor===r.moves.length&&(replay.in_stalemate()||replay.in_draw())&&!replay.in_checkmate();if(r.cursor>0){if(r.cursor===r.moves.length&&replay.in_stalemate())playStalemateSound();else playMoveSound(r.moves[r.cursor-1]);}selected=null;targets=[];updateReplayLabel();drawBoard();syncCoachReviewToReplay(r.cursor);renderMoves();renderReplayTimeline()}
+function renderReplayTimeline(){const el=document.getElementById('replayTimeline');if(!el)return;if(!replayState){el.innerHTML='<span class="muted">Start a replay to see moves.</span>';return}const r=replayState;let html='<button onclick="replayGoTo(0)" class="'+(r.cursor===0?'active':'')+'">Start</button>';r.moves.forEach((m,i)=>{const label=(i%2===0?(Math.floor(i/2)+1)+'. ':'')+m.san;html+='<button class="'+(r.cursor===i+1?'active':'')+'" onclick="replayGoTo('+(i+1)+')">'+label+'</button>'});el.innerHTML=html;const active=el.querySelector('.active');if(active){const box=el.getBoundingClientRect(),item=active.getBoundingClientRect();if(item.top<box.top)el.scrollTop-=box.top-item.top;else if(item.bottom>box.bottom)el.scrollTop+=item.bottom-box.bottom;if(item.left<box.left)el.scrollLeft-=box.left-item.left;else if(item.right>box.right)el.scrollLeft+=item.right-box.right}}
+function updateReplayLabel(){if(!replayState)return;const r=replayState;document.getElementById('replayCount').textContent='Position '+r.cursor+'/'+r.moves.length+' plies';document.getElementById('replayPlay').textContent=replayTimer?'Ⅱ Pause Coach Review':'♟ Coach Review'}
+async function toggleReplayPlay(){if(replayTimer){stopReplayPlay();return}const button=document.getElementById('replayPlay');const pgn=replayState?currentAnalysisPGN():game.pgn();if(!pgn||(!replayState&&!game.history().length)){toast('Play or import a game first, then start Coach Review.');return}restoreCachedCoachReview();if(!getReviewRows().length){if(analysisBusy){toast('Analysis is already running. Please wait for it to finish.');return}if(button){button.disabled=true;button.textContent='Preparing Coach Review…'}try{await runGameAnalysis('quick')}finally{if(button){button.disabled=false;button.textContent='♟ Coach Review'}}restoreCachedCoachReview();if(!getReviewRows().length){toast('Coach Review could not prepare. Check the analysis message and try again.');return}}if(!replayState){startReplay(pgn);if(!replayState)return}if(soundEnabled&&soundVolume>0)getAudio();if(replayState.cursor>=replayState.moves.length){replayState.cursor=0;renderReplayPosition()}if(button)button.textContent='Ⅱ Pause Coach Review';replayTimer=setInterval(()=>{if(!replayState||replayState.cursor>=replayState.moves.length){stopReplayPlay();return}replayState.cursor++;renderReplayPosition();if(replayState.cursor>=replayState.moves.length)stopReplayPlay()},Number(document.getElementById('replaySpeed').value)||1000)}
+function stopReplayPlay(){if(replayTimer){clearInterval(replayTimer);replayTimer=null}const b=document.getElementById('replayPlay');if(b)b.textContent='♟ Coach Review'}
+function changeReplaySpeed(){if(replayTimer){stopReplayPlay();toggleReplayPlay()}}
+function exitReplay(){if(!replayState)return;stopReplayPlay();game=replayState.liveGame;manualGameResult=replayState.liveManualGameResult||null;replayState=null;document.getElementById('replayCount').textContent='Live game';document.getElementById('exitReplay').disabled=true;document.getElementById('replayTimeline').innerHTML='<span class="muted">Start a replay to see moves.</span>';selected=null;targets=[];drawBoard();renderMoves()}
+
+let stockfishWorker=null,engineReady=false,enginePromise=null,analysisBusy=false;
+function getEngine(){
+  if(stockfishWorker&&engineReady)return Promise.resolve(stockfishWorker);
+  if(enginePromise)return enginePromise;
+  enginePromise=new Promise((resolve,reject)=>{
+    try{
+      // Stockfish.js 19 lite is itself a UCI worker. It expects the WASM URL in the worker URL hash.
+      const wasmUrl=new URL('./engine/stockfish-19.0.1/stockfish-19-lite-single.wasm',document.baseURI).href;
+      const scriptUrl='./engine/stockfish-19.0.1/stockfish-19-lite-single.js#'+encodeURIComponent(wasmUrl);
+      stockfishWorker=new Worker(scriptUrl);
+      const worker=stockfishWorker;
+      worker.onmessage=event=>{
+        const line=event.data;
+        if(typeof line==='string'&&worker._pending)worker._pending(line);
+      };
+      worker.onerror=()=>{
+        engineReady=false;
+        enginePromise=null;
+        if(worker._rejectPending)worker._rejectPending(new Error('The local Stockfish worker could not load its WASM engine.'));
+        if(stockfishWorker){stockfishWorker.terminate();stockfishWorker=null}
+      };
+      engineReady=true;
+      resolve(worker);
+    }catch(error){
+      engineReady=false;
+      enginePromise=null;
+      reject(error);
+    }
+  });
+  return enginePromise;
+}
+function engineCommand(worker,command,finishOn,timeoutMs=45000){
+  return new Promise((resolve,reject)=>{
+    let latestInfo='',latestDepth=-1,done=false;
+    const timer=setTimeout(()=>{if(done)return;done=true;worker._pending=null;worker._rejectPending=null;if(worker===stockfishWorker){try{worker.terminate()}catch(error){}stockfishWorker=null;engineReady=false;enginePromise=null}reject(new Error('Stockfish analysis timed out. The engine was reset; you can safely retry.'))},timeoutMs);
+    worker._rejectPending=error=>{if(done)return;done=true;clearTimeout(timer);worker._pending=null;worker._rejectPending=null;reject(error)};
+    worker._pending=line=>{
+      if(line.startsWith('info ')){
+        const depthMatch=line.match(/\bdepth (\d+)/),hasScore=/\bscore (?:cp|mate) -?\d+/.test(line),isBound=/\b(?:lowerbound|upperbound)\b/.test(line);
+        const depth=depthMatch?Number(depthMatch[1]):0;
+        if(hasScore&&!isBound&&depth>=latestDepth){latestInfo=line;latestDepth=depth;}
+      }
+      if(finishOn(line)){if(done)return;done=true;clearTimeout(timer);worker._pending=null;worker._rejectPending=null;resolve({line,info:latestInfo})}
+    };
+    worker.postMessage(command);
+  });
+}
+const ANALYSIS_MATE_SCORE=100000;
+function parseEngineScore(info,fen){
+  const match=String(info||'').match(/\bscore (cp|mate) (-?\d+)(?:\s|$)/);
+  if(!match)return null;
+  const turn=fen.split(' ')[1];
+  const value=Number(match[2]);
+  if(match[1]==='mate'){
+    const whiteMate=turn==='w'?value:-value;
+    if(whiteMate>0)return ANALYSIS_MATE_SCORE-Math.min(99999,Math.abs(whiteMate));
+    if(whiteMate<0)return -ANALYSIS_MATE_SCORE+Math.min(99999,Math.abs(whiteMate));
+    return 0;
+  }
+  return (turn==='w'?1:-1)*value;
+}
+function classifyMove(cpLoss,flags={}){
+  // Mate outcomes take priority over ordinary centipawn bands.
+  if(flags.mateDelivered)return {name:'Best',kind:'best'};
+  if(flags.mateLoss)return {name:'Blunder',kind:'blunder'};
+  if(flags.missedMate)return {name:'Miss',kind:'miss'};
+  if(flags.brilliant)return {name:'Brilliant',kind:'brilliant'};
+  if(flags.great)return {name:'Great',kind:'great'};
+  if(flags.miss)return {name:'Miss',kind:'miss'};
+  if(flags.book&&cpLoss<=25)return {name:'Book',kind:'book'};
+  if(flags.best&&cpLoss<=25)return {name:'Best',kind:'best'};
+  // Classify from the mover's centipawn loss, not win-probability loss.
+  // The previous probability curve saturated in already-lost positions,
+  // labelling 2–8 pawn mistakes "Excellent". These are Chess Master
+  // heuristics, not Chess.com's private CAPS2 thresholds.
+  if(cpLoss<=5)return {name:'Best',kind:'best'};
+  if(cpLoss<=20)return {name:'Excellent',kind:'excellent'};
+  if(cpLoss<=30)return {name:'Good',kind:'good'};
+  if(cpLoss<=100)return {name:'Inaccuracy',kind:'inaccuracy'};
+  if(cpLoss<=200)return {name:'Mistake',kind:'mistake'};
+  return {name:'Blunder',kind:'blunder'};
+}
+function getAnalysisRatings(){
+  let saved={};try{saved=JSON.parse(localStorage.getItem('chessMasterPlayerRatingsV2')||'{}')||{}}catch(error){}
+  const clean=value=>Math.max(100,Math.min(3000,Math.round(Number(value)||100)));
+  return {White:clean(saved.White),Black:clean(saved.Black)};
+}
+function saveAnalysisRatings(){
+  const ratings=getAnalysisRatings();
+  const white=document.getElementById('analysisWhiteRating'),black=document.getElementById('analysisBlackRating');
+  if(white)white.value=ratings.White;if(black)black.value=ratings.Black;
+}
+function loadAnalysisRatings(){saveAnalysisRatings()}
+function applyCompletedGameRatings(){
+  if(!ratingEligible||!game||replayState||!game.history().length)return;
+  const checkmate=game.in_checkmate(),finished=!!manualGameResult||game.game_over();if(!finished)return;
+  let scoreWhite=null;
+  if(manualGameResult){
+    if(/draw/i.test(manualGameResult))scoreWhite=.5;
+    else if(/White wins/i.test(manualGameResult))scoreWhite=1;
+    else if(/Black wins/i.test(manualGameResult))scoreWhite=0;
+  }else if(checkmate)scoreWhite=game.turn()==='w'?0:1;
+  else if(game.game_over())scoreWhite=.5;
+  if(scoreWhite===null)return;
+  const key='chessMasterPlayerRatingsV2',appliedKey='chessMasterRatedGamesV1';
+  let applied=[];try{applied=JSON.parse(localStorage.getItem(appliedKey)||'[]')||[]}catch(error){}
+  const id=String(currentGameId);if(applied.includes(id))return;
+  const ratings=getAnalysisRatings(),expectedWhite=1/(1+Math.pow(10,(ratings.Black-ratings.White)/400)),k=32;
+  ratings.White=Math.max(100,Math.min(3000,Math.round(ratings.White+k*(scoreWhite-expectedWhite))));
+  ratings.Black=Math.max(100,Math.min(3000,Math.round(ratings.Black+k*((1-scoreWhite)-(1-expectedWhite)))));
+  try{localStorage.setItem(key,JSON.stringify(ratings));localStorage.setItem(appliedKey,JSON.stringify([...applied,id].slice(-500)))}catch(error){return}
+  saveAnalysisRatings();
+  toast('Ratings updated · White '+ratings.White+' · Black '+ratings.Black);
+}
+function expectedPoints(cpWhite,side,ratings){
+  const playerCp=side==='White'?cpWhite:-cpWhite;
+  const opponent=side==='White'?'Black':'White';
+  const ratingEdge=(ratings[side]||100)-(ratings[opponent]||100);
+  // Independent Elo-style conversion from engine advantage to expected
+  // score. The exact CAPS2 conversion is not public.
+  const effective=(Math.max(-1200,Math.min(1200,playerCp))*1.25)+ratingEdge;
+  return 1/(1+Math.pow(10,-effective/400));
+}
+const OPENING_BOOK_LINES=[
+  'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7',
+  'e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6',
+  'e4 e5 Nf3 Nc6 d4 exd4 Nxd4',
+  'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3',
+  'e4 c5 Nf3 Nc6 d4 cxd4 Nxd4',
+  'e4 e6 d4 d5 Nc3 Nf6',
+  'e4 e6 d4 d5 Nd2 Nf6',
+  'e4 c6 d4 d5 Nc3 dxe4 Nxe4',
+  'e4 c6 d4 d5 e5 Bf5',
+  'd4 d5 c4 e6 Nc3 Nf6',
+  'd4 d5 c4 c6 Nf3 Nf6 Nc3',
+  'd4 Nf6 c4 g6 Nc3 Bg7 e4 d6',
+  'd4 Nf6 c4 e6 Nc3 Bb4',
+  'd4 Nf6 c4 e6 Nf3 d5 Nc3',
+  'c4 e5 Nc3 Nf6 Nf3 Nc6',
+  'Nf3 d5 d4 Nf6 c4 e6'
+];
+function isOpeningBookMove(sans,moveSan){
+  // A move is book only when the move itself extends a known opening line.
+  // Checking only the position prefix incorrectly marked off-book replies
+  // as book moves whenever the position happened to match a repertoire line.
+  const sequence=[...(sans||[]),moveSan||''].filter(Boolean).join(' ');
+  return !!sequence&&OPENING_BOOK_LINES.some(line=>line===sequence||line.startsWith(sequence+' '));
+}
+function scoreAccuracy(centipawnLosses){
+  if(!centipawnLosses.length)return null;
+  // Average per-move quality keeps large errors visible even when a player
+  // was already far behind and a win-probability curve had flattened.
+  const scores=centipawnLosses.map(value=>{
+    const loss=Math.max(0,Math.min(2000,Number(value)||0));
+    return Math.exp(-loss/180);
+  });
+  const average=scores.reduce((sum,value)=>sum+value,0)/scores.length;
+  // Transparent Chess Master estimate; not Chess.com CAPS2.
+  return Math.max(1,Math.min(100,Math.round(100*average)));
+}
+function materialBalance(fen,color){
+  const position=new Chess(fen),board=position.board(),values={p:1,n:3,b:3,r:5,q:9,k:0};
+  // Chess.js stores piece colours as "w"/"b", while analysis rows use
+  // the labels "White"/"Black". Normalize before comparing.
+  const side=color==='White'?'w':color==='Black'?'b':color;
+  let balance=0;
+  board.forEach(rank=>rank.forEach(piece=>{if(piece)balance+=(piece.color===side?1:-1)*values[piece.type]}));
+  return balance;
+}
+function isBrilliantSacrifice(beforeFen,afterFen,replyPv,mover,loss,played){
+  // A sound sacrifice may be declined by the engine's best defence. Detect
+  // whether the moved piece is legally capturable, rather than requiring the
+  // PV to accept it. Keep the move-quality gate to avoid tagging bad hangs.
+  if(!Number.isFinite(loss)||loss>80||!played||!played.to)return false;
+  try{
+    const after=new Chess(afterFen),board=after.board();
+    const target=board[8-Number(played.to[1])][played.to.charCodeAt(0)-97];
+    const side=mover==='White'?'w':mover==='Black'?'b':mover;
+    if(!target||target.color!==side||!['n','b','r','q'].includes(target.type))return false;
+    const opponent=side==='w'?'b':'w';
+    const captures=after.moves({verbose:true}).filter(move=>move.color===opponent&&move.to===played.to&&!!move.captured);
+    if(!captures.length)return false;
+    const values={p:1,n:3,b:3,r:5,q:9,k:0};
+    // Only count a real piece offer (minor piece or greater), not a pawn
+    // that happens to be en prise.
+    return values[target.type]>=3;
+  }catch(error){return false}
+}
+function escapeAnalysisText(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));}
+function uciPvToSan(fen,pv){
+  if(!pv)return '';
+  try{
+    const position=new Chess(fen),tokens=String(pv).trim().split(/\s+/),san=[];
+    for(const token of tokens){
+      const match=token.match(/^([a-h][1-8])([a-h][1-8])([qrbn])?$/);
+      if(!match)break;
+      const move=position.move({from:match[1],to:match[2],promotion:match[3]||'q'});
+      if(!move)break;
+      san.push(move.san);
+      if(san.length>=8){if(tokens.length>san.length)san.push('…');break;}
+    }
+    return san.join(' ');
+  }catch(error){return ''}
+}
+let analysisRowsState=[];
+let selectedAnalysisCategory=null;
+const analysisCategoryDefinitions=[
+  {name:'Best',color:'#16834a'},{name:'Excellent',color:'#2d9a68'},
+  {name:'Good',color:'#65a879'},{name:'Inaccuracy',color:'#d6a23a'},
+  {name:'Mistake',color:'#e58a35'},{name:'Blunder',color:'#dc5555'},
+  {name:'Great',color:'#16a36a'},{name:'Brilliant',color:'#8b5cf6'},
+  {name:'Miss',color:'#c04d72'},{name:'Book',color:'#6686a8'}
+];
+let analysisRowsByMode={quick:[],deep:[]};
+function renderAnalysisSummary(wa,ba,rows){
+  const counts=Object.fromEntries(analysisCategoryDefinitions.map(item=>[item.name,0]));
+  (rows||[]).forEach(row=>{const name=row.classification&&row.classification.name;if(Object.prototype.hasOwnProperty.call(counts,name))counts[name]++;});
+  const breakdown='<div class="analysisBreakdown"><div class="analysisBreakdownTitle">Move classification · '+(rows||[]).length+' moves · tap a category to highlight its moves</div>'+analysisCategoryDefinitions.map(item=>'<div class="analysisCountRow"><button type="button" class="analysisCountButton" data-category="'+item.name+'" aria-pressed="'+(selectedAnalysisCategory===item.name?'true':'false')+'" onclick="selectAnalysisCategory(\''+item.name+'\',this)"><span class="analysisCountLabel"><i class="analysisCountDot" style="--count-color:'+item.color+'"></i>'+item.name+'</span><strong class="analysisCountValue">'+counts[item.name]+'</strong></button></div>').join('')+'</div>';
+  return '<div class="analysisSummary"><div class="analysisStat"><span class="muted">White accuracy · estimate</span><strong>'+formatAccuracy(wa)+'</strong></div><div class="analysisStat"><span class="muted">Black accuracy · estimate</span><strong>'+formatAccuracy(ba)+'</strong></div></div>'+breakdown+'<p class="muted analysisCategoryNote">Book is matched against a small built-in opening-line set. Expected-points and accuracy values are Chess Master estimates, not Chess.com’s private CAPS2 calculations.</p>';
+}
+function selectAnalysisCategory(name,button){
+  selectedAnalysisCategory=selectedAnalysisCategory===name?null:name;
+  document.querySelectorAll('.analysisCountButton').forEach(item=>item.setAttribute('aria-pressed',item.dataset.category===selectedAnalysisCategory?'true':'false'));
+  const panel=button&&button.closest('.analysisPanel');
+  if(!panel)return;
+  const mode=panel.id==='deepAnalysisPanel'?'deep':'quick',results=panel.querySelector('.analysisResults');
+  const rows=analysisRowsByMode[mode]||[];
+  if(results)results.innerHTML=renderAnalysisRows(rows);
+  if(selectedAnalysisCategory&&results){
+    const first=results.querySelector('.analysisMove.categoryMatch');
+    if(first)first.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+function renderAnalysisRows(rows){
+  analysisRowsState=rows||[];
+  return analysisRowsState.map((row,index)=>{
+    const category=row.classification&&row.classification.name;
+    const match=selectedAnalysisCategory&&category===selectedAnalysisCategory;
+    const rowClass=selectedAnalysisCategory?(match?' categoryMatch':' categoryDim'):'';
+    const loss=row.mateLoss?' This move allows a forced checkmate.':row.missedMate?' This move misses a forced checkmate.':row.mateDelivered?' This move delivers checkmate.':Number.isFinite(Number(row.loss))?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
+    const explore=row.best?'<button type="button" class="variationToggle" onclick="toggleVariation('+index+')">Explore engine line</button><div class="variationPanel hidden" id="variationPanel'+index+'"></div>':'';
+    return '<article class="analysisMove'+rowClass+'" role="button" tabindex="0" onclick="if(!event.target.closest(\'.variationToggle,.variationPanel\'))reviewAnalysisMove('+index+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();reviewAnalysisMove('+index+')}"><div class="analysisPly">'+Math.ceil(row.ply/2)+(row.side==='White'?'.':'…')+'</div><div class="analysisMoveMain"><span class="analysisSide">'+escapeAnalysisText(row.side)+'</span><span class="analysisNotation">'+escapeAnalysisText(row.move)+'</span></div><span class="analysisTag '+escapeAnalysisText(row.classification.kind)+'">'+escapeAnalysisText(row.classification.name)+'</span><div class="analysisExplanation">'+escapeAnalysisText(explainMove(row))+loss+'</div>'+explore+'</article>';
+  }).join('');
+}
+function explainMove(row){
+  const name=row.classification?.name||'Move',move=row.move||'the move',side=row.side||'The player',best=row.best||'';
+  if(row.mateLoss)return side+' allowed a forced checkmate. The engine found a move that could have resisted longer or avoided mate.';
+  if(row.missedMate)return side+' missed a forced checkmate opportunity.';
+  if(row.mateDelivered)return side+' delivered checkmate.';
+  if(name==='Brilliant')return side+' found a strong tactical move classified as Brilliant by the current engine search. Review the continuation to verify the idea.';
+  if(name==='Great')return side+' found a particularly strong move in an important position.';
+  if(name==='Best')return side+' played the engine’s top move in this position.';
+  if(name==='Excellent')return side+' chose a move that stayed close to the engine’s top continuation.';
+  if(name==='Good')return side+' played a reasonable move, although the engine preferred a more accurate continuation.';
+  if(name==='Book')return side+' played a move recognised in Chess Master’s opening reference lines.';
+  if(name==='Miss')return row.missedTactic&&best?side+' missed a forcing tactical opportunity. The engine’s suggested continuation starts with '+best+'.':side+' missed a chance to take better advantage of the position. Compare the engine’s suggested continuation.';
+  if(name==='Blunder')return side+' played '+move+', which caused a major deterioration in the engine evaluation. Check for a tactical threat, hanging piece or king-safety issue.';
+  if(name==='Mistake')return side+' played '+move+', allowing a significant improvement for the opponent. Compare the suggested continuation.';
+  if(name==='Inaccuracy')return side+' played '+move+'. The move remains playable, but the engine preferred a more precise option.';
+  let detail='The engine did not assign this move one of the main error or standout categories. ';
+  if(row.promotion)detail+='The move promotes a pawn. ';
+  else if(row.castling)detail+='The move castles, usually improving king safety and rook activity. ';
+  else if(row.captured)detail+='The move captures an opponent’s piece. ';
+  else if(row.check)detail+='The move gives check. ';
+  return detail+(best?'Compare the suggested engine continuation for another candidate.':'No additional engine explanation is available for this move.');
+}
+function hasCoachMetric(value){
+  return value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
+}
+function toggleVariation(index){
+  const panel=document.getElementById('variationPanel'+index);if(!panel)return;
+  if(!panel.classList.contains('hidden')){panel.classList.add('hidden');return}
+  panel.classList.remove('hidden');renderVariation(index,0);
+}
+function renderVariation(index,ply){
+  const row=analysisRowsState[index],panel=document.getElementById('variationPanel'+index);if(!row||!panel)return;
+  const tokens=(row.best||'').split(/\s+/).filter(token=>token&&token!=='…');
+  const position=new Chess(row.fen||new Chess().fen()),snapshots=[position.fen()];
+  for(const token of tokens){const move=position.move(token,{sloppy:true});if(!move)break;snapshots.push(position.fen())}
+  const current=Math.max(0,Math.min(ply,snapshots.length-1)),board=new Chess(snapshots[current]).board();
+  let cells='';
+  for(let rank=0;rank<8;rank++)for(let file=0;file<8;file++){const piece=board[rank][file],glyph=piece?symbols[piece.color+piece.type]:'',light=(rank+file)%2===0;cells+='<span class="variationSquare '+(light?'light':'dark')+'">'+glyph+'</span>'}
+  const sequence=tokens.map((token,i)=>(i%2===0?Math.floor(i/2+1)+'. ':'')+escapeAnalysisText(token)).join(' ');
+  panel.innerHTML='<div class="variationBoard" aria-label="Variation position">'+cells+'</div><div class="variationLine"><strong>Engine continuation</strong><div>'+sequence+'</div></div><div class="variationControls"><button type="button" '+(current===0?'disabled':'')+' onclick="renderVariation('+index+','+(current-1)+')">Previous</button><span>Position '+current+' / '+(snapshots.length-1)+'</span><button type="button" '+(current>=snapshots.length-1?'disabled':'')+' onclick="renderVariation('+index+','+(current+1)+')">Next</button></div>';
+}
+function hashAnalysisText(value){
+  let hash=2166136261;
+  for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619)}
+  return (hash>>>0).toString(16);
+}
+function renderEvalGraph(id,evaluations){
+  const el=document.getElementById(id);if(!el||!evaluations.length)return;
+  const w=640,h=96,pad=8,mid=h/2,scale=mid/500;
+  function perspectiveGraph(side){
+    const sign=side==='White'?1:-1;
+    const values=evaluations.map(e=>({cp:(Number(e.cp)||0)*sign}));
+    const points=values.map((e,i)=>{
+      const x=pad+(values.length===1?0:i*(w-2*pad)/(values.length-1));
+      const y=Math.max(pad,Math.min(h-pad,mid-(Math.max(-500,Math.min(500,e.cp))*scale)));
+      return [x,y];
+    });
+    const line=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    const area=line+' L '+points[points.length-1][0].toFixed(1)+','+mid+' L '+points[0][0].toFixed(1)+','+mid+' Z';
+    const last=values[values.length-1].cp;
+    const label=Math.abs(last)>=10000?'Forced mate':(Math.abs(last)<10?'Equal':(last>0?'+':'−')+(Math.abs(last)/100).toFixed(2));
+    const colorClass=side.toLowerCase();
+    return '<div class="analysisPerspective '+colorClass+'"><div class="analysisGraphHead"><span>'+side+' perspective</span><span>'+label+'</span></div><svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+side+' evaluation graph; upward means advantage for '+side+'"><line class="evalZero" x1="0" y1="'+mid+'" x2="'+w+'" y2="'+mid+'"/><path class="evalArea" d="'+area+'"/><path class="evalLine" d="'+line+'"/></svg><div class="analysisGraphFoot"><span>Game start</span><span>'+side+' advantage ↑</span><span>Game end</span></div></div>';
+  }
+  el.innerHTML='<div class="analysisGraphHead"><span>Separate player evaluation graphs</span><span>Centipawns · ±5.00 scale</span></div>'+perspectiveGraph('White')+perspectiveGraph('Black');
+}
+function formatAccuracy(value){return value===null?'—':value+'%'}
+function currentAnalysisPGN(){
+  if(replayState){
+    const replayPGN=new Chess();
+    replayState.moves.forEach(move=>replayPGN.move(move));
+    return replayPGN.pgn();
+  }
+  return game.pgn();
+}
+function downloadAnalysis(mode){
+  if(!['quick','deep'].includes(mode)){toast('Unknown analysis type.');return}
+  const pgn=currentAnalysisPGN();
+  if(!pgn){toast('Load or play a game before downloading analysis.');return}
+  const cacheKey='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(error){}
+  if(!saved||!Array.isArray(saved.rows)||!Array.isArray(saved.evaluations)){
+    toast('Complete this analysis first, then download it.');
+    return;
+  }
+  const report={
+    format:'Chess Master Analysis Export',
+    schemaVersion:1,
+    exportedAt:new Date().toISOString(),
+    analysis:{
+      mode,
+      engine:'Stockfish 19.0.1 lite · locally hosted',
+      moveTimeMs:saved.moveTime,
+      createdAt:saved.createdAt||null,
+      note:'Move classifications and accuracy are Chess Master estimates, not Chess.com CAPS2. Evaluations depend on engine version, search time and hardware.'
+    },
+    game:{pgn,whiteRating:saved.ratings?.White??getAnalysisRatings().White,blackRating:saved.ratings?.Black??getAnalysisRatings().Black},
+    summary:{whiteAccuracy:saved.wa,blackAccuracy:saved.ba},
+    evaluations:saved.evaluations,
+    moves:saved.rows
+  };
+  const json=JSON.stringify(report,null,2);
+  try{
+    const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob),link=document.createElement('a');
+    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    link.href=url;link.download='chess-master-'+mode+'-analysis-'+stamp+'.json';
+    link.style.display='none';document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    toast((mode==='quick'?'Quick':'Deep')+' analysis downloaded.');
+  }catch(error){
+    try{window.prompt('Copy your Chess Master analysis JSON:',json)}catch(copyError){toast('Could not export analysis on this browser.')}
+  }
+}
+async function analyseCurrentGame(){return runGameAnalysis('quick')}
+async function analyseCurrentGameDeep(){return runGameAnalysis('deep')}
+async function runGameAnalysis(mode,force=false){
+  if(analysisBusy)return;
+  let pgn=game.pgn();if(replayState){const replayPGN=new Chess();replayState.moves.forEach(move=>replayPGN.move(move));pgn=replayPGN.pgn();}
+  if(!pgn){toast('Play or load a game before analysing.');return}
+  const candidate=new Chess();
+  if(!candidate.load_pgn(pgn)||!candidate.history().length){toast('This game has no moves to analyse.');return}
+  const modes={
+    quick:{deep:false,prefix:'analysis',button:'analyseGameBtn',panel:'analysisPanel',moveTime:500,timeout:30000,label:'Quick'},
+    deep:{deep:true,prefix:'deepAnalysis',button:'deepAnalyseBtn',panel:'deepAnalysisPanel',moveTime:1600,timeout:45000,label:'Deep'},
+  };
+  const config=modes[mode];if(!config)throw new Error('Unknown analysis mode');
+  const {deep,prefix,moveTime,timeout,label}=config;
+  const btn=document.getElementById(config.button),panel=document.getElementById(config.panel);
+  const status=document.getElementById(prefix+'Status'),results=document.getElementById(prefix+'Results'),progress=document.getElementById(prefix+'ProgressBar');
+  const summary=document.getElementById(prefix+'Summary');
+  const cacheKey='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
+  // A fresh tap on Analyse must actually start Stockfish. Do not short-circuit
+  // the first review by showing an old cached result and changing the button.
+  if(!force && btn.dataset.hasAnalysis==='true'){
+    try{
+      const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');
+      if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
+        analysisRowsByMode[mode]=saved.rows;
+        summary.innerHTML=renderAnalysisSummary(saved.wa,saved.ba,saved.rows);
+        results.innerHTML=renderAnalysisRows(saved.rows);
+        renderEvalGraph(prefix+'Graph',saved.evaluations);progress.style.width='100%';status.textContent=label+' analysis · saved result';renderPostGameReview(mode);const exportBtn=document.getElementById(mode==='quick'?'exportQuickAnalysisBtn':'exportDeepAnalysisBtn');if(exportBtn)exportBtn.disabled=false;btn.dataset.hasAnalysis='true';btn.textContent='↻ Reanalyse';btn.onclick=()=>runGameAnalysis(mode,true);return;
+      }
+    }catch(e){}
+  }
+  analysisBusy=true;panel.classList.remove('hidden');const exportBtn=document.getElementById(mode==='quick'?'exportQuickAnalysisBtn':'exportDeepAnalysisBtn');if(exportBtn)exportBtn.disabled=true;btn.disabled=true;btn.textContent=label+' review running…';
+  status.textContent='Starting local engine';results.innerHTML='<p class="muted">'+(deep?'Deep Analysis is preparing Stockfish. It will spend about 1.2 seconds on each position.':'Loading the local Stockfish engine. Quick Analysis will begin automatically when ready.')+'</p>';summary.innerHTML='';progress.style.width='0%';
+  try{
+    const worker=await getEngine();
+    status.textContent='Preparing Stockfish';
+    await engineCommand(worker,'uci',line=>line==='uciok',60000);
+    await engineCommand(worker,'isready',line=>line==='readyok',30000);
+    worker.postMessage('ucinewgame');
+    const moves=candidate.history({verbose:true}),replay=new Chess(),positions=[{fen:replay.fen(),ply:0,move:'Start',side:'—'}];
+    moves.forEach((move,i)=>{replay.move(move);positions.push({fen:replay.fen(),ply:i+1,move:move.san,side:i%2===0?'White':'Black'})});
+    const evaluations=[];
+    for(let i=0;i<positions.length;i++){
+      status.textContent=label+' analysis · position '+(i+1)+' of '+positions.length;
+      const positionState=new Chess(positions[i].fen);
+      if(positionState.game_over()){
+        const sideToMove=positions[i].fen.split(' ')[1];
+        const terminalCp=positionState.in_check()?(sideToMove==='w'?-ANALYSIS_MATE_SCORE:ANALYSIS_MATE_SCORE):0;
+        evaluations.push({cp:terminalCp,best:''});
+        progress.style.width=Math.round((i+1)/positions.length*100)+'%';
+        continue;
+      }
+      worker._pending=null;worker.postMessage('position fen '+positions[i].fen);
+      const output=await engineCommand(worker,'go movetime '+moveTime,line=>line.startsWith('bestmove'),timeout);
+      const cp=parseEngineScore(output.info,positions[i].fen);
+      const best=(output.info.match(/ pv (.+)$/)||[])[1]||((output.line.match(/^bestmove\s+(\S+)/)||[])[1]||'');
+      if(cp===null||!Number.isFinite(cp))throw new Error('Stockfish did not return a usable evaluation for position '+(i+1)+'. Please run the analysis again.');
+      evaluations.push({cp,best});
+      progress.style.width=Math.round((i+1)/positions.length*100)+'%';
+    }
+    const whiteLoss=[],blackLoss=[],rows=[],ratings=getAnalysisRatings();
+    for(let i=1;i<positions.length;i++){
+      const before=evaluations[i-1].cp,after=evaluations[i].cp,mover=positions[i].side;
+      const beforePoints=expectedPoints(before,mover,ratings),afterPoints=expectedPoints(after,mover,ratings);
+      const expectedLoss=Math.max(0,beforePoints-afterPoints);
+      const cpLoss=Math.max(0,Math.round(mover==='White'?before-after:after-before));
+      (mover==='White'?whiteLoss:blackLoss).push(cpLoss);
+      const played=moves[i-1],bestSan=uciPvToSan(positions[i-1].fen,evaluations[i-1].best);
+      const bestUci=((evaluations[i-1].best||'').match(/^([a-h][1-8][a-h][1-8][qrbn]?)/)||[])[1]||'';
+      const playedUci=played.from+played.to+(played.promotion||'');
+      const exactBest=!!bestUci&&bestUci===playedUci;
+      const historySans=moves.slice(0,i).map(move=>move.san);
+      const book=isOpeningBookMove(historySans,positions[i].move);
+      const previousPoints=i>=2?expectedPoints(evaluations[i-2].cp,mover,ratings):beforePoints;
+      const opponentBlunderGain=beforePoints-previousPoints;
+      const missAfterBlunder=i>=2&&opponentBlunderGain>=0.08&&expectedLoss>=0.05&&!exactBest;
+      let legalCount=0;try{legalCount=new Chess(positions[i-1].fen).moves().length}catch(error){}
+      const moverBefore=mover==='White'?before:-before,moverAfter=mover==='White'?after:-after;
+      const mateThreshold=ANALYSIS_MATE_SCORE-100;
+      const mateLoss=moverBefore>-mateThreshold&&moverAfter<=-mateThreshold;
+      const missedMate=moverBefore>=mateThreshold&&moverAfter<mateThreshold;
+      const mateDelivered=/#$/.test(played.san);
+      const bestFirstMove=(bestSan.split(/\s+/)[0]||'');
+      const bestIsForcing=/[+#]$/.test(bestFirstMove);
+      // Also flag a missed forcing check when the engine's first move is a
+      // check/mate and the played move gives up a meaningful amount. This
+      // catches tactical misses even when the opponent's prior move was not
+      // itself classified as a blunder.
+      const missedTactic=!exactBest&&bestIsForcing&&cpLoss>=100&&(cpLoss<=600||expectedLoss>=0.08||missedMate);
+      const miss=missAfterBlunder||missedTactic;
+      const great=!exactBest&&cpLoss<=20&&legalCount===1;
+      const sacrifice=isBrilliantSacrifice(positions[i-1].fen,positions[i].fen,evaluations[i].best,mover,cpLoss,played);
+      const brilliant=sacrifice&&cpLoss<=20&&beforePoints<0.95&&afterPoints>0.35;
+      const classification=classifyMove(cpLoss,{brilliant,great,miss,book,best:exactBest,mateLoss,missedMate,mateDelivered});
+      rows.push({ply:i,move:positions[i].move,side:mover,loss:cpLoss,evalBefore:before,evalAfter:after,expectedLoss,mateLoss,missedMate,missedTactic,mateDelivered,classification,best:bestSan,bestUci,fen:positions[i-1].fen,captured:!!played.captured,promotion:!!played.promotion,castling:!!(played.flags&&(played.flags.includes('k')||played.flags.includes('q'))),check:/[+#]$/.test(played.san)});
+    }
+    const wa=scoreAccuracy(whiteLoss),ba=scoreAccuracy(blackLoss);
+    try{localStorage.setItem(cacheKey,JSON.stringify({wa,ba,rows,evaluations,moveTime,ratings:{White:ratings.White,Black:ratings.Black},createdAt:new Date().toISOString()}))}catch(e){}
+    analysisRowsByMode[mode]=rows;
+    if(exportBtn)exportBtn.disabled=false;
+    summary.innerHTML=renderAnalysisSummary(wa,ba,rows);
+    results.innerHTML=renderAnalysisRows(rows);
+    renderEvalGraph(prefix+'Graph',evaluations);
+    btn.dataset.hasAnalysis='true';btn.onclick=()=>runGameAnalysis(mode,true);
+    status.textContent=label+' analysis complete · '+moveTime+' ms per position';renderPostGameReview(mode);
+  }catch(error){
+    status.textContent='Could not complete';
+    results.innerHTML='<p class="muted">'+String(error.message||error)+'</p><p class="muted">Chess Master is using its locally hosted Stockfish engine. Check that the page and engine files have finished loading, then retry.</p>';
+  }finally{
+    analysisBusy=false;btn.disabled=false;btn.textContent=btn.dataset.hasAnalysis==='true'?'↻ Reanalyse':(deep?'♟ Run Deep Analysis':'♟ Analyse game with Stockfish');
+  }
+}
+
+
+/* Chess Master move-by-move review layer */
+let activeReviewRowIndex=-1,activeReviewMode='quick';
+let reviewArrowUci='';
+function getReviewRows(){
+  return analysisRowsByMode[activeReviewMode]||analysisRowsByMode.quick||[];
+}
+
+function syncCoachReviewToReplay(ply){
+  const rows=getReviewRows(),row=rows.find(item=>item.ply===ply);
+  const coach=document.getElementById('reviewCoachText');
+  const hub=document.getElementById('gameReviewHub');
+  if(!row){
+    activeReviewRowIndex=-1;reviewArrowUci='';
+    if(ply===0&&coach)coach.textContent=rows.length?'Coach Review is ready. Start playback to follow the move explanations.':'Run Quick Analysis to unlock move-quality feedback and coach explanations. You can still replay the game here.';
+    else if(coach&&!rows.length)coach.textContent='Run Quick Analysis to unlock move-quality feedback and coach explanations. You can still replay the game here.';
+    const previous=document.getElementById('reviewPrevious'),next=document.getElementById('reviewNext');
+    if(previous)previous.disabled=true;if(next)next.disabled=true;
+    drawReviewArrow();
+    return;
+  }
+  activeReviewRowIndex=rows.indexOf(row);reviewArrowUci=row.bestUci||'';
+  const category=row.classification?.name||'Move';
+  const loss=hasCoachMetric(row.loss)?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
+  const evalText=hasCoachMetric(row.evalBefore)&&hasCoachMetric(row.evalAfter)?' Evaluation (White perspective): '+(row.evalBefore/100).toFixed(2)+' → '+(row.evalAfter/100).toFixed(2)+'. ':'';
+  const label='Move '+Math.ceil(row.ply/2)+(row.side==='White'?' · White':' · Black')+' · '+category;
+  if(coach)coach.textContent=label+'. '+category+'. '+explainMove(row)+evalText+(row.best?' Best continuation: '+row.best+'.':'')+loss;
+  const previous=document.getElementById('reviewPrevious'),next=document.getElementById('reviewNext');
+  if(previous)previous.disabled=activeReviewRowIndex<=0;
+  if(next)next.disabled=activeReviewRowIndex>=rows.length-1;
+  if(hub)hub.hidden=false;
+  drawReviewArrow();
+}
+function getReviewSaved(mode){
+  const pgn=currentAnalysisPGN();
+  if(!pgn)return null;
+  const key='chessMasterAnalysisV15:'+mode+':'+hashAnalysisText(pgn);
+  try{return JSON.parse(localStorage.getItem(key)||'null')}catch(error){return null}
+}
+function getPreferredReviewMode(){
+  // Deep Analysis always takes priority when both result sets exist.
+  for(const mode of ['deep','quick']){
+    const saved=getReviewSaved(mode);
+    if(saved&&Array.isArray(saved.rows)&&Array.isArray(saved.evaluations)){
+      analysisRowsByMode[mode]=saved.rows;
+      return mode;
+    }
+  }
+  return null;
+}
+function restoreCachedCoachReview(){
+  const mode=getPreferredReviewMode();
+  if(mode){activeReviewMode=mode;renderPostGameReview(mode);}
+}
+function getReviewOutcome(pgn){
+  const candidate=new Chess();
+  if(!candidate.load_pgn(pgn))return {title:'Game reviewed',note:'Result unavailable in this PGN.'};
+  const headers=candidate.header()||{};
+  const result=headers.Result||headers.result||'';
+  if(candidate.in_checkmate())return {title:candidate.turn()==='w'?'Black wins':'White wins',note:'Checkmate'};
+  if(candidate.in_stalemate()||candidate.in_draw()||result==='1/2-1/2')return {title:'Draw',note:'The game ended level.'};
+  if(result==='1-0')return {title:'White wins',note:'PGN result'};
+  if(result==='0-1')return {title:'Black wins',note:'PGN result'};
+  return {title:'Game complete',note:'No rated online result is recorded for this local game.'};
+}
+function renderPostGameReview(mode){
+  activeReviewRowIndex=-1;
+  // Show Deep Analysis coach/metrics whenever deep results exist, even if
+  // Quick Analysis was also run or completed more recently.
+  mode=getPreferredReviewMode()||mode;
+  activeReviewMode=mode;const saved=getReviewSaved(mode);
+  if(!saved||!Array.isArray(saved.rows))return;
+  const hub=document.getElementById('gameReviewHub');
+  if(!hub)return;
+  const outcome=getReviewOutcome(currentAnalysisPGN());
+  document.getElementById('reviewOutcome').textContent=outcome.title;
+  document.getElementById('reviewOutcomeNote').textContent=outcome.note+' · Local game · no online rating change';
+  document.getElementById('reviewWhiteAccuracy').textContent=formatAccuracy(saved.wa);
+  document.getElementById('reviewBlackAccuracy').textContent=formatAccuracy(saved.ba);
+  document.getElementById('reviewMoveCount').textContent=saved.rows.length+' moves analysed';
+  const counts={};saved.rows.forEach(row=>{const name=row.classification&&row.classification.name;counts[name]=(counts[name]||0)+1});
+  document.getElementById('reviewBestMoves').textContent=(counts.Best||0)+(counts.Brilliant||0)+(counts.Great||0);
+  document.getElementById('reviewErrors').textContent=(counts.Mistake||0)+(counts.Blunder||0);
+  document.getElementById('reviewCoachText').textContent='Analysis is ready. Tap any move in the move-by-move list to see the board position, move quality, engine alternative and explanation.';
+  hub.hidden=false;
+  // Keep the user's current viewport steady when analysis prepares or refreshes Game Review.
+  const first=saved.rows.length?0:-1;
+  document.getElementById('reviewPrevious').disabled=true;
+  document.getElementById('reviewNext').disabled=first<0;
+
+}
+function reviewAnalysisMove(index){
+  const rows=getReviewRows(),row=rows[index];
+  if(!row)return;
+  const pgn=currentAnalysisPGN();
+  if(!replayState||replayState.fullPgn!==ChessPgnCanonical(pgn)){
+    startReplay(pgn);
+  }
+  activeReviewRowIndex=index;
+  replayGoTo(row.ply);
+  reviewArrowUci=row.bestUci||'';
+  drawReviewArrow();
+  const category=row.classification?.name||'Move';
+  const loss=hasCoachMetric(row.loss)?' Engine-estimated loss: '+(Number(row.loss)/100).toFixed(2)+' pawns.':'';
+  const evalText=hasCoachMetric(row.evalBefore)&&hasCoachMetric(row.evalAfter)?' Evaluation (White perspective): '+(row.evalBefore/100).toFixed(2)+' → '+(row.evalAfter/100).toFixed(2)+'. ':'';
+  syncCoachReviewToReplay(row.ply);
+  const hub=document.getElementById('gameReviewHub');if(hub)hub.hidden=false;
+}
+function ChessPgnCanonical(pgn){
+  const candidate=new Chess();
+  return candidate.load_pgn(pgn)?candidate.pgn({max_width:80}):pgn;
+}
+function stepReviewMove(delta){
+  const rows=getReviewRows();
+  if(!rows.length)return;
+  const next=Math.max(0,Math.min(rows.length-1,(activeReviewRowIndex<0?0:activeReviewRowIndex)+delta));
+  reviewAnalysisMove(next);
+}
+function drawReviewArrow(){
+  const board=document.getElementById('board');
+  if(!board)return;
+  const old=board.querySelector('.reviewArrowLayer');if(old)old.remove();
+  const uci=reviewArrowUci;
+  if(!uci||uci.length<4)return;
+  const from=uci.slice(0,2),to=uci.slice(2,4);
+  const point=(square)=>{
+    let x=square.charCodeAt(0)-97,y=8-Number(square[1]);
+    if(flipped){x=7-x;y=7-y}
+    return {x:(x+.5)*100,y:(y+.5)*100};
+  };
+  const a=point(from),b=point(to);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 800 800');svg.setAttribute('class','reviewArrowLayer');svg.setAttribute('aria-hidden','true');
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const marker=document.createElementNS('http://www.w3.org/2000/svg','marker');
+  marker.setAttribute('id','reviewArrowHead');marker.setAttribute('markerWidth','7');marker.setAttribute('markerHeight','7');marker.setAttribute('refX','5');marker.setAttribute('refY','3');marker.setAttribute('orient','auto');
+  const head=document.createElementNS('http://www.w3.org/2000/svg','path');head.setAttribute('d','M0,0 L6,3 L0,6 Z');head.setAttribute('fill','#176b3b');marker.appendChild(head);defs.appendChild(marker);svg.appendChild(defs);
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);line.setAttribute('stroke','#176b3b');line.setAttribute('stroke-width','13');line.setAttribute('stroke-linecap','round');line.setAttribute('stroke-opacity','.82');line.setAttribute('marker-end','url(#reviewArrowHead)');svg.appendChild(line);
+  board.appendChild(svg);
+}
+
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
 
 loadAnalysisRatings();
