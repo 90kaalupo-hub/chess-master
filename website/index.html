@@ -165,7 +165,7 @@ function openBotSetup(){showHome();document.getElementById('botSetupPanel').clas
 function closeBotSetup(){document.getElementById('botSetupPanel').classList.add('hidden')}
 function startBotGame(){
  humanSide=document.getElementById('botSide').value==='b'?'b':'w';botMode=true;botThinking=false;botGameToken++;document.getElementById('botThinkingStatus').textContent='';
- clearGameAnalysisState();game.reset();manualGameResult=null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=humanSide==='b';closeBotSetup();showGame();
+ clearGameAnalysisState();game.reset();renderMoves();manualGameResult=null;currentGameId=Date.now();ratingEligible=false;selected=null;targets=[];flipped=humanSide==='b';closeBotSetup();showGame();
  document.getElementById('gameModeEyebrow').textContent='Offline AI challenge';document.getElementById('gameTitle').textContent='vs '+selectedBot.name;document.getElementById('gameHelpText').textContent='You are '+(humanSide==='w'?'White':'Black')+'. '+selectedBot.name+' plays offline on this device.';
  if(humanSide==='b')scheduleBotMove();else updateStatus();
 }
@@ -185,9 +185,11 @@ async function scheduleBotMove(){
   if(token!==botGameToken||!botMode)return;
   const match=output.line.match(/^bestmove\s+([a-h][1-8][a-h][1-8][qrbn]?)/);
   if(!match)throw new Error('The engine did not return a legal move.');
-  const uci=match[1];if(status)status.textContent='';const move=game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||'q'});
+  const uci=match[1],from=uci.slice(0,2),to=uci.slice(2,4);if(status)status.textContent='';
+  const source=document.querySelector('#board .sq[aria-label^="'+from+' "]'),sourceRect=source?source.getBoundingClientRect():null,sourceSize=source?getComputedStyle(source).fontSize:'40px',movingGlyph=source?source.textContent.trim():'';
+  const move=game.move({from,to,promotion:uci[4]||'q'});
   if(!move)throw new Error('The engine returned a move that is not legal in this position.');
-  selected=null;targets=[];saveCurrentGame();drawBoard();renderMoves();if(game.in_checkmate())showCheckmate(game.turn()==='w'?'Black':'White');else if(game.in_stalemate())showDraw('Stalemate!','Neither player can make a legal move, and the king is not in check.','stalemate');else if(game.in_draw())showDraw('Game drawn','The game has ended in a draw.','draw');
+  selected=null;targets=[];saveCurrentGame();drawBoard();animatePieceMove(from,to,movingGlyph,sourceRect,sourceSize,move);if(game.in_stalemate())playStalemateSound();else playMoveSound(move);renderMoves();if(game.in_checkmate())showCheckmate(game.turn()==='w'?'Black':'White');else if(game.in_stalemate())showDraw('Stalemate!','Neither player can make a legal move, and the king is not in check.','stalemate');else if(game.in_draw())showDraw('Game drawn','The game has ended in a draw.','draw');
  }catch(error){if(token===botGameToken){toast('The AI move could not be completed. Tap Retry AI move to try again.');if(status)status.innerHTML='<button type="button" class="secondary" onclick="scheduleBotMove()">↻ Retry AI move</button>';console.error('Offline bot move failed',error)}}
  finally{if(token===botGameToken){botThinking=false;updateStatus()}}
 }
@@ -200,7 +202,43 @@ function showGame(){document.getElementById('home').classList.add('hidden');docu
 function showHome(){if(botMode)stopBotGame();document.getElementById('home').classList.remove('hidden');document.getElementById('game').style.display='none';document.getElementById('importPanel').classList.add('hidden');window.scrollTo(0,0)}
 function showImport(){showHome();document.getElementById('importPanel').classList.remove('hidden');document.getElementById('importPanel').scrollIntoView({behavior:'smooth',block:'center'})}
 function hideImport(){document.getElementById('importPanel').classList.add('hidden')}
-function drawBoard(){if(!game)return;const el=document.getElementById('board');el.innerHTML='';const board=game.board(),lastMove=game.history({verbose:true}).slice(-1)[0],drawPosition=!game.in_checkmate()&&(game.in_stalemate()||game.in_draw())||!!(replayState&&replayState.isTerminalDraw),drawKings=drawPosition?game.board().flatMap((rank,r)=>rank.map((piece,c)=>piece&&piece.type==='k'?'abcdefgh'[c]+(8-r):null).filter(Boolean)):[],checkedKing=game.in_check()?game.board().flatMap((rank,r)=>rank.map((piece,c)=>piece&&piece.type==='k'&&piece.color===game.turn()?'abcdefgh'[c]+(8-r):null).filter(Boolean))[0]:null;const rows=[0,1,2,3,4,5,6,7],cols=[0,1,2,3,4,5,6,7];if(flipped){rows.reverse();cols.reverse()}for(const r of rows)for(const c of cols){const sq=document.createElement('button');const name='abcdefgh'[c]+(8-r);const piece=board[r][c];sq.type='button';sq.className='sq '+((r+c)%2?'dark':'light');if(selected===name)sq.classList.add('selected');if(replayState&&replayState.lastMove&&(replayState.lastMove.from===name||replayState.lastMove.to===name))sq.classList.add('lastMove');if(drawKings.includes(name))sq.classList.add('drawKingGlow');if(checkedKing===name){sq.classList.add('inCheck');sq.setAttribute('aria-label',name+' king in check')}if(!replayState&&lastMove&&lastMove.to===name&&(lastMove.flags.includes('c')||lastMove.flags.includes('e')))sq.classList.add('captureFlash');if(targets.includes(name)){sq.classList.add('target');if(piece)sq.classList.add('hasPiece')}sq.textContent=piece?symbols[piece.color+piece.type]:'';if(!replayState&&lastMove&&lastMove.to===name&&(lastMove.flags.includes('c')||lastMove.flags.includes('e'))&&lastMove.captured){const burst=document.createElement('span');burst.className='captureBurst';burst.setAttribute('aria-hidden','true');burst.textContent=symbols[(lastMove.color==='w'?'b':'w')+lastMove.captured];sq.appendChild(burst)}if(!checkedKing||checkedKing!==name)sq.setAttribute('aria-label',name+(piece?' '+piece.color+' '+piece.type:' empty'));sq.onclick=()=>tapSquare(name);el.appendChild(sq)}updateStatus()}
+function drawBoard(){
+ if(!game)return;
+ const el=document.getElementById('board');
+ const board=game.board(),lastMove=game.history({verbose:true}).slice(-1)[0];
+ const drawPosition=!game.in_checkmate()&&(game.in_stalemate()||game.in_draw())||!!(replayState&&replayState.isTerminalDraw);
+ const drawKings=drawPosition?board.flatMap((rank,r)=>rank.map((piece,c)=>piece&&piece.type==='k'?'abcdefgh'[c]+(8-r):null).filter(Boolean)):[];
+ const checkedKing=game.in_check()?board.flatMap((rank,r)=>rank.map((piece,c)=>piece&&piece.type==='k'&&piece.color===game.turn()?'abcdefgh'[c]+(8-r):null).filter(Boolean))[0]:null;
+ const rows=[0,1,2,3,4,5,6,7],cols=[0,1,2,3,4,5,6,7];
+ if(flipped){rows.reverse();cols.reverse()}
+ // Keep the 64 square elements mounted. Replacing the whole board on every
+ // engine reply causes avoidable layout shifts and prevents smooth piece motion.
+ if(el.children.length!==64){
+  el.innerHTML='';
+  for(const r of rows)for(const c of cols){
+   const sq=document.createElement('button'),name='abcdefgh'[c]+(8-r);
+   sq.type='button';sq.dataset.square=name;sq.onclick=()=>tapSquare(name);el.appendChild(sq);
+  }
+ }
+ let index=0;
+ for(const r of rows)for(const c of cols){
+  const name='abcdefgh'[c]+(8-r),piece=board[r][c],sq=el.children[index++];
+  sq.dataset.square=name;sq.onclick=()=>tapSquare(name);
+  sq.className='sq '+((r+c)%2?'dark':'light');
+  if(selected===name)sq.classList.add('selected');
+  if(replayState&&replayState.lastMove&&(replayState.lastMove.from===name||replayState.lastMove.to===name))sq.classList.add('lastMove');
+  if(drawKings.includes(name))sq.classList.add('drawKingGlow');
+  if(checkedKing===name){sq.classList.add('inCheck');sq.setAttribute('aria-label',name+' king in check')}
+  if(!replayState&&lastMove&&lastMove.to===name&&(lastMove.flags.includes('c')||lastMove.flags.includes('e')))sq.classList.add('captureFlash');
+  if(targets.includes(name)){sq.classList.add('target');if(piece)sq.classList.add('hasPiece')}
+  sq.textContent=piece?symbols[piece.color+piece.type]:'';
+  if(!checkedKing||checkedKing!==name)sq.setAttribute('aria-label',name+(piece?' '+piece.color+' '+piece.type:' empty'));
+  if(!replayState&&lastMove&&lastMove.to===name&&(lastMove.flags.includes('c')||lastMove.flags.includes('e'))&&lastMove.captured){
+   const burst=document.createElement('span');burst.className='captureBurst';burst.setAttribute('aria-hidden','true');burst.textContent=symbols[(lastMove.color==='w'?'b':'w')+lastMove.captured];sq.appendChild(burst);
+  }
+ }
+ updateStatus();
+}
 let pendingPromotion=null;
 function tapSquare(square){if(botThinking||(botMode&&game.turn()!==humanSide)||replayState||game.game_over()||manualGameResult||pendingPromotion)return;const piece=game.get(square);if(selected&&targets.includes(square)){const from=selected,movingPiece=game.get(from);if(movingPiece&&movingPiece.type==='p'&&(square[1]==='1'||square[1]==='8')){pendingPromotion={from,to:square};showPromotionChoice(movingPiece.color);return}commitMove(from,square,'q');return}if(piece&&piece.color===game.turn()){selected=square;targets=game.moves({square,verbose:true}).map(m=>m.to)}else{selected=null;targets=[]}drawBoard()}
 function showPromotionChoice(color){const overlay=document.getElementById('promotionOverlay'),choices=document.getElementById('promotionChoices');if(!overlay||!choices)return;const names=[['q','Queen'],['r','Rook'],['b','Bishop'],['n','Knight']];choices.innerHTML=names.map(([type,name])=>'<button type="button" class="promotionChoice" onclick="choosePromotion(\''+type+'\')"><span class="promotionGlyph">'+symbols[color+type]+'</span>'+name+'</button>').join('');document.getElementById('promotionTitle').textContent=(color==='w'?'White':'Black')+' pawn promotion';overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');const first=choices.querySelector('button');if(first)first.focus()}
