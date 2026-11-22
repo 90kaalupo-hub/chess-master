@@ -102,7 +102,7 @@
 <button class="tile" onclick="toast('Lessons and openings are planned for v0.6.')"><div class="ico">♜</div><strong>Learn chess</strong><small>Build skills step by step</small></button>
 </section>
 <div class="notice"><span>🌱</span><div><strong>The first playable foundation</strong><div class="muted">Local two-player chess, move history, undo, board flip and PGN tools are now included. Online play and AI analysis are later milestones.</div></div></div><section style="margin-top:24px"><div class="sectionHead"><div><h2>Game History</h2><p class="sub">Recent games and games you keep forever · saved on this device</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" onclick="renderSavedGames()">Refresh</button><button class="secondary" onclick="deleteAllSavedGames()">Delete all</button></div></div><div id="savedGames" class="side"><p class="muted">Your games will appear here as you play.</p></div></section>
-<section id="importPanel" class="hidden" style="margin-top:20px;background:white;border:1px solid var(--line);border-radius:16px;padding:16px"><div class="gameHead"><div><h2>Import a game</h2><p class="sub">Paste a Chess.com game link or import the PGN moves directly.</p></div><button class="secondary" onclick="hideImport()">Close</button></div><h3 style="font-size:14px;margin:8px 0 4px">Chess.com game link</h3><input id="chessComLinkInput" class="field" type="url" inputmode="url" placeholder="https://www.chess.com/game/live/123456789" autocomplete="url"><div class="actions"><button class="primary" onclick="importChessComLink()">Continue with link</button><button class="secondary" type="button" onclick="pasteChessComLink()">Paste from clipboard</button><button class="secondary" onclick="document.getElementById('chessComLinkInput').value=''">Clear</button></div><p class="muted">A link identifies the game but does not include its moves. If Chess.com does not provide a supported direct export, use Export PGN below.</p><h3 style="font-size:14px;margin:18px 0 4px">Or import PGN</h3><textarea id="pgnInput" class="field" placeholder='[Event "Casual Game"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><div class="actions"><button class="primary" onclick="loadPGN()">Load PGN</button><button class="secondary" onclick="document.getElementById('pgnInput').value=''">Clear</button></div><p class="muted" id="importStatus"></p></section>
+<section id="importPanel" class="hidden" style="margin-top:20px;background:white;border:1px solid var(--line);border-radius:16px;padding:16px"><div class="gameHead"><div><h2>Import a game</h2><p class="sub">Paste a Chess.com game link or import the PGN moves directly.</p></div><button class="secondary" onclick="hideImport()">Close</button></div><h3 style="font-size:14px;margin:8px 0 4px">Chess.com game link</h3><input id="chessComLinkInput" class="field" type="url" inputmode="url" placeholder="https://www.chess.com/game/live/123456789" autocomplete="url"><div class="actions"><button class="primary" id="continueChessComLinkBtn" type="button">Continue with link</button><button class="secondary" type="button" onclick="pasteChessComLink()">Paste from clipboard</button><button class="secondary" onclick="document.getElementById('chessComLinkInput').value=''">Clear</button></div><p class="muted">A link identifies the game but does not include its moves. If Chess.com does not provide a supported direct export, use Export PGN below.</p><h3 style="font-size:14px;margin:18px 0 4px">Or import PGN</h3><textarea id="pgnInput" class="field" placeholder='[Event "Casual Game"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><div class="actions"><button class="primary" onclick="loadPGN()">Load PGN</button><button class="secondary" onclick="document.getElementById('pgnInput').value=''">Clear</button></div><p class="muted" id="importStatus"></p></section>
 </section>
 <section id="game">
 <div class="gameHead"><div><div class="eyebrow">Local game</div><h1 style="font-size:28px">Play chess</h1><p class="sub" id="gameStatus">White to move</p></div><button class="secondary" onclick="showHome()">← Home</button></div>
@@ -129,7 +129,7 @@
 <script>
 const symbols={wp:'♙',wn:'♘',wb:'♗',wr:'♖',wq:'♕',wk:'♔',bp:'♟',bn:'♞',bb:'♝',br:'♜',bq:'♛',bk:'♚'};
 let game,selected=null,targets=[],flipped=false,toastTimer,replayState=null,replayTimer=null,currentGameId=Date.now(),soundEnabled=localStorage.getItem('chessMasterSound')!=='off',audioContext=null,mateTimer=null,manualGameResult=null,ratingEligible=true;
-function init(){if(typeof Chess==='undefined'){toast('Chess rules library did not load. Connect to the internet and refresh.');return}game=new Chess();drawPreview();drawBoard();renderMoves();renderSavedGames();updateSoundButton()}
+function init(){if(typeof Chess==='undefined'){toast('Chess rules library did not load. Connect to the internet and refresh.');return}game=new Chess();drawPreview();drawBoard();renderMoves();renderSavedGames();updateSoundButton();const importButton=document.getElementById('continueChessComLinkBtn');if(importButton)importButton.addEventListener('click',importChessComLink)}
 function drawPreview(){const el=document.getElementById('preview');el.innerHTML='';const g=new Chess();const b=g.board();for(let r=0;r<8;r++)for(let c=0;c<8;c++){const s=document.createElement('div');s.className='sq '+((r+c)%2?'dark':'light');const p=b[r][c];s.textContent=p?symbols[p.color+p.type]:'';el.appendChild(s)}}
 function showGame(){document.getElementById('home').classList.add('hidden');document.getElementById('game').style.display='block';document.getElementById('importPanel').classList.add('hidden');drawBoard();window.scrollTo(0,0)}
 function showHome(){document.getElementById('home').classList.remove('hidden');document.getElementById('game').style.display='none';document.getElementById('importPanel').classList.add('hidden');window.scrollTo(0,0)}
@@ -190,17 +190,23 @@ async function pasteChessComLink(){
 function importChessComLink(){
   const field=document.getElementById('chessComLinkInput');
   const status=document.getElementById('importStatus');
-  const raw=(field?.value||'').trim();
-  if(!raw){status.textContent='Paste a Chess.com game link first.';return}
+  if(!status)return;
+  status.textContent='Checking Chess.com link…';
+  status.style.display='block';
   try{
+    const raw=field?String(field.value||'').trim():'';
+    if(!raw){status.textContent='Paste a Chess.com game link first.';return}
     const parsed=new URL(raw);
-    if(parsed.protocol!=='https:'||!(parsed.hostname==='chess.com'||parsed.hostname==='www.chess.com')||!/^\/(?:game\/(?:live|daily)|(?:live|daily)\/game)\/\d+\/?$/.test(parsed.pathname)){
-      status.textContent='That link is not a supported public Chess.com game URL. Use a link like https://www.chess.com/game/live/123456789.';
+    const supportedHost=parsed.hostname==='chess.com'||parsed.hostname==='www.chess.com';
+    const supportedPath=/^\/(?:game\/(?:live|daily)|(?:live|daily)\/game)\/\d+\/?$/.test(parsed.pathname);
+    if(parsed.protocol!=='https:'||!supportedHost||!supportedPath){
+      status.textContent='Unsupported link. Paste a public Chess.com game URL such as https://www.chess.com/live/game/187744102468.';
       return;
     }
     showChessComImportHelp(parsed.href);
+    status.scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(error){
-    status.textContent='Please enter a complete, valid HTTPS Chess.com game link.';
+    status.textContent='Could not check that link: '+(error&&error.message?error.message:'Please paste a complete HTTPS Chess.com game URL.');
   }
 }
 function showChessComImportHelp(gameUrl){
