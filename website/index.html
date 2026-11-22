@@ -204,7 +204,6 @@ function importChessComLink(){
       return;
     }
     showChessComImportHelp(parsed.href);
-    status.scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(error){
     status.textContent='Could not check that link: '+(error&&error.message?error.message:'Please paste a complete HTTPS Chess.com game URL.');
   }
