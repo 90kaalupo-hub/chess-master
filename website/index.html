@@ -137,18 +137,18 @@
 <script>
 
 const BOT_PROFILES=[
-{name:'Rookie',icon:'🌱',style:'Very relaxed play with frequent beginner mistakes',level:'Beginner',skill:0,time:70,randomChance:.88},
-{name:'Scout',icon:'🔎',style:'Gentle beginner practice; often overlooks tactics',level:'Beginner',skill:1,time:90,randomChance:.78},
-{name:'Rookie Plus',icon:'♟',style:'A little more consistent, but still makes simple errors',level:'Beginner+',skill:2,time:110,randomChance:.66},
-{name:'Tactician',icon:'⚔️',style:'Casual club play with noticeable inaccuracies',level:'Intermediate',skill:4,time:150,randomChance:.52},
-{name:'Strategist',icon:'🧭',style:'More purposeful play with occasional mistakes',level:'Intermediate',skill:6,time:190,randomChance:.42},
-{name:'Guardian',icon:'🛡️',style:'Steadier play with some tactical oversights',level:'Intermediate',skill:8,time:240,randomChance:.32},
-{name:'Warrior',icon:'🔥',style:'Strong attacks, but not always accurate',level:'Advanced',skill:10,time:300,randomChance:.23},
-{name:'Wizard',icon:'✨',style:'Usually accurate with occasional unexpected errors',level:'Advanced',skill:12,time:370,randomChance:.15},
-{name:'Phantom',icon:'👻',style:'A tough opponent with rare loose moves',level:'Advanced',skill:14,time:450,randomChance:.10},
-{name:'Grandmaster',icon:'♛',style:'Very strong engine-backed play',level:'Expert',skill:16,time:540,randomChance:.06},
-{name:'Legend',icon:'🏆',style:'Near-engine strength with very few deliberate errors',level:'Expert',skill:18,time:650,randomChance:.025},
-{name:'Chess Master',icon:'👑',style:'The strongest available engine setting',level:'Master',skill:20,time:800,randomChance:0}
+{name:'Rookie',icon:'🌱',style:'Beginner play with frequent, believable oversights',level:'Beginner',skill:0,time:320,choiceWeights:[.12,.28,.60],maxLossCp:500},
+{name:'Scout',icon:'🔎',style:'Gentle beginner practice; spots some simple tactics',level:'Beginner',skill:1,time:380,choiceWeights:[.20,.35,.45],maxLossCp:360},
+{name:'Rookie Plus',icon:'♟',style:'Develops more reliably but still misses tactics',level:'Beginner+',skill:2,time:440,choiceWeights:[.32,.38,.30],maxLossCp:260},
+{name:'Tactician',icon:'⚔️',style:'Finds basic tactics but makes occasional inaccuracies',level:'Intermediate',skill:4,time:500,choiceWeights:[.48,.34,.18],maxLossCp:190},
+{name:'Strategist',icon:'🧭',style:'More purposeful development and steadier defence',level:'Intermediate',skill:6,time:560,choiceWeights:[.58,.30,.12],maxLossCp:145},
+{name:'Guardian',icon:'🛡️',style:'Usually notices direct threats and loose pieces',level:'Intermediate',skill:8,time:620,choiceWeights:[.68,.24,.08],maxLossCp:110},
+{name:'Warrior',icon:'🔥',style:'Tactical and active, with occasional missed chances',level:'Advanced',skill:10,time:680,choiceWeights:[.75,.20,.05],maxLossCp:90},
+{name:'Wizard',icon:'✨',style:'Strong tactical awareness and consistent development',level:'Advanced',skill:12,time:740,choiceWeights:[.82,.15,.03],maxLossCp:75},
+{name:'Phantom',icon:'👻',style:'Difficult opponent with few avoidable errors',level:'Advanced',skill:14,time:800,choiceWeights:[.88,.10,.02],maxLossCp:60},
+{name:'Grandmaster',icon:'♛',style:'Very strong engine-backed play',level:'Expert',skill:16,time:860,choiceWeights:[.93,.07,0],maxLossCp:45},
+{name:'Legend',icon:'🏆',style:'Near-engine play with very few inaccuracies',level:'Expert',skill:18,time:920,choiceWeights:[.97,.03,0],maxLossCp:30},
+{name:'Chess Master',icon:'👑',style:'Strongest available engine setting',level:'Master',skill:20,time:1000,choiceWeights:[1,0,0],maxLossCp:0}
 ];
 let botMode=false,botThinking=false,humanSide='w',selectedBot=BOT_PROFILES[0],botGameToken=0;
 function renderBotRoster(){
@@ -171,6 +171,47 @@ function startBotGame(){
 }
 function cancelBotSearch(){botGameToken++;if(botThinking&&stockfishWorker){try{stockfishWorker.terminate()}catch(error){}stockfishWorker=null;engineReady=false;enginePromise=null}botThinking=false}
 function stopBotGame(){botMode=false;cancelBotSearch();const s=document.getElementById('botThinkingStatus');if(s)s.textContent='';document.getElementById('gameModeEyebrow').textContent='Local game';document.getElementById('gameTitle').textContent='Play chess';document.getElementById('gameHelpText').textContent='Pass the device between players after each move.'}
+async function engineMultiPvSearch(worker,command,timeoutMs=20000){
+ return new Promise((resolve,reject)=>{
+  const lines=new Map();let done=false;
+  const timer=setTimeout(()=>{
+   if(done)return;done=true;worker._pending=null;worker._rejectPending=null;
+   if(worker===stockfishWorker){try{worker.terminate()}catch(error){}stockfishWorker=null;engineReady=false;enginePromise=null}
+   reject(new Error('Stockfish bot search timed out. The engine was reset; you can safely retry.'));
+  },timeoutMs);
+  worker._rejectPending=error=>{if(done)return;done=true;clearTimeout(timer);worker._pending=null;worker._rejectPending=null;reject(error)};
+  worker._pending=line=>{
+   if(line.startsWith('info ')&&!/\b(?:lowerbound|upperbound)\b/.test(line)){
+    const depth=Number((line.match(/\bdepth (\d+)/)||[])[1]||0);
+    const rank=Number((line.match(/\bmultipv (\d+)/)||[])[1]||1);
+    const scoreMatch=line.match(/\bscore (cp|mate) (-?\d+)/);
+    const pvMatch=line.match(/\bpv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+    if(scoreMatch&&pvMatch){
+     const raw=Number(scoreMatch[2]),score=scoreMatch[1]==='mate'?(raw>0?100000-raw:-100000-raw):raw;
+     const old=lines.get(rank);
+     if(!old||depth>=old.depth)lines.set(rank,{rank,depth,score,uci:pvMatch[1]});
+    }
+   }
+   if(line.startsWith('bestmove')){
+    if(done)return;done=true;clearTimeout(timer);worker._pending=null;worker._rejectPending=null;
+    resolve([...lines.values()].sort((x,y)=>x.rank-y.rank));
+   }
+  };
+  worker.postMessage(command);
+ });
+}
+function chooseBotCandidate(candidates,profile){
+ if(!candidates.length)return null;
+ const best=candidates[0].score;
+ const eligible=candidates.filter(candidate=>best-candidate.score<=profile.maxLossCp);
+ if(!eligible.length)return candidates[0];
+ const weights=profile.choiceWeights.slice(0,eligible.length);
+ const total=weights.reduce((sum,value)=>sum+value,0);
+ if(total<=0)return eligible[0];
+ let roll=Math.random()*total;
+ for(let i=0;i<eligible.length;i++){roll-=weights[i]||0;if(roll<=0)return eligible[i]}
+ return eligible[eligible.length-1];
+}
 async function scheduleBotMove(){
  if(!botMode||botThinking||!game||game.game_over()||manualGameResult||game.turn()===humanSide)return;
  const token=botGameToken;botThinking=true;updateStatus();const status=document.getElementById('botThinkingStatus');if(status)status.innerHTML='<span class="botThinking">'+selectedBot.name+' is thinking…</span>';
@@ -180,19 +221,16 @@ async function scheduleBotMove(){
   await engineCommand(worker,'isready',line=>line==='readyok',30000);
   worker.postMessage('setoption name Skill Level value '+selectedBot.skill);
   await engineCommand(worker,'isready',line=>line==='readyok',30000);
+  worker.postMessage('setoption name MultiPV value 3');
+  await engineCommand(worker,'isready',line=>line==='readyok',30000);
   worker.postMessage('position fen '+game.fen());
-  const output=await engineCommand(worker,'go movetime '+selectedBot.time,line=>line.startsWith('bestmove'),Math.max(12000,selectedBot.time*10));
+  const candidates=await engineMultiPvSearch(worker,'go movetime '+selectedBot.time,Math.max(15000,selectedBot.time*20));
   if(token!==botGameToken||!botMode)return;
-  const match=output.line.match(/^bestmove\s+([a-h][1-8][a-h][1-8][qrbn]?)/);
-  if(!match)throw new Error('The engine did not return a legal move.');
-  const engineUci=match[1];
-  // Stockfish Skill Level alone does not create reliable beginner strength.
-  // For lower tiers, deliberately mix in legal human-like inaccuracies.
+  const choice=chooseBotCandidate(candidates,selectedBot);
+  const chosenUci=choice?choice.uci:null;
   const legalMoves=game.moves({verbose:true});
-  const chosenMove=Math.random()<selectedBot.randomChance
-   ?legalMoves[Math.floor(Math.random()*legalMoves.length)]
-   :legalMoves.find(candidate=>candidate.from+candidate.to+(candidate.promotion||'')===engineUci);
-  if(!chosenMove)throw new Error('The engine did not return a legal move.');
+  const chosenMove=legalMoves.find(candidate=>candidate.from+candidate.to+(candidate.promotion||'')===chosenUci);
+  if(!chosenMove)throw new Error('Stockfish did not provide a legal candidate move.');
   const from=chosenMove.from,to=chosenMove.to,promotion=chosenMove.promotion||'q';if(status)status.textContent='';
   const source=document.querySelector('#board .sq[aria-label^="'+from+' "]'),sourceRect=source?source.getBoundingClientRect():null,sourceSize=source?getComputedStyle(source).fontSize:'40px',movingGlyph=source?source.textContent.trim():'';
   const move=game.move({from,to,promotion});
