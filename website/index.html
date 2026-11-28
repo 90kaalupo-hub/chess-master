@@ -137,9 +137,9 @@
 <script>
 
 const BOT_PROFILES=[
-{name:'Rookie',icon:'🌱',style:'Beginner play with frequent, believable oversights',level:'Beginner',skill:0,time:320,choiceWeights:[.12,.28,.60],maxLossCp:500},
-{name:'Scout',icon:'🔎',style:'Gentle beginner practice; spots some simple tactics',level:'Beginner',skill:1,time:380,choiceWeights:[.20,.35,.45],maxLossCp:360},
-{name:'Rookie Plus',icon:'♟',style:'Develops more reliably but still misses tactics',level:'Beginner+',skill:2,time:440,choiceWeights:[.32,.38,.30],maxLossCp:260},
+{name:'Rookie',icon:'🌱',style:'Very relaxed beginner play with frequent oversights',level:'Beginner',skill:0,time:250,randomMoveChance:.45,choiceWeights:[.08,.22,.70],maxLossCp:900},
+{name:'Scout',icon:'🔎',style:'Easy beginner practice with occasional tactical awareness',level:'Beginner',skill:1,time:300,randomMoveChance:.32,choiceWeights:[.12,.28,.60],maxLossCp:700},
+{name:'Rookie Plus',icon:'♟',style:'Gentle step up while still making regular mistakes',level:'Beginner+',skill:2,time:360,randomMoveChance:.22,choiceWeights:[.18,.34,.48],maxLossCp:550},
 {name:'Tactician',icon:'⚔️',style:'Finds basic tactics but makes occasional inaccuracies',level:'Intermediate',skill:4,time:500,choiceWeights:[.48,.34,.18],maxLossCp:190},
 {name:'Strategist',icon:'🧭',style:'More purposeful development and steadier defence',level:'Intermediate',skill:6,time:560,choiceWeights:[.58,.30,.12],maxLossCp:145},
 {name:'Guardian',icon:'🛡️',style:'Usually notices direct threats and loose pieces',level:'Intermediate',skill:8,time:620,choiceWeights:[.68,.24,.08],maxLossCp:110},
@@ -200,8 +200,12 @@ async function engineMultiPvSearch(worker,command,timeoutMs=20000){
   worker.postMessage(command);
  });
 }
-function chooseBotCandidate(candidates,profile){
+function chooseBotCandidate(candidates,profile,legalMoves){
  if(!candidates.length)return null;
+ if(legalMoves&&legalMoves.length&&Math.random()<(profile.randomMoveChance||0)){
+  const move=legalMoves[Math.floor(Math.random()*legalMoves.length)];
+  return {uci:move.from+move.to+(move.promotion||'')};
+ }
  const best=candidates[0].score;
  const eligible=candidates.filter(candidate=>best-candidate.score<=profile.maxLossCp);
  if(!eligible.length)return candidates[0];
@@ -226,9 +230,9 @@ async function scheduleBotMove(){
   worker.postMessage('position fen '+game.fen());
   const candidates=await engineMultiPvSearch(worker,'go movetime '+selectedBot.time,Math.max(15000,selectedBot.time*20));
   if(token!==botGameToken||!botMode)return;
-  const choice=chooseBotCandidate(candidates,selectedBot);
-  const chosenUci=choice?choice.uci:null;
   const legalMoves=game.moves({verbose:true});
+  const choice=chooseBotCandidate(candidates,selectedBot,legalMoves);
+  const chosenUci=choice?choice.uci:null;
   const chosenMove=legalMoves.find(candidate=>candidate.from+candidate.to+(candidate.promotion||'')===chosenUci);
   if(!chosenMove)throw new Error('Stockfish did not provide a legal candidate move.');
   const from=chosenMove.from,to=chosenMove.to,promotion=chosenMove.promotion||'q';if(status)status.textContent='';
